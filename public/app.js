@@ -19,11 +19,20 @@ async function load() {
   const params = new URLSearchParams();
   if ($('#q').value) params.set('q', $('#q').value);
   if ($('#source').value) params.set('source', $('#source').value);
-  const data = await fetch(`/api/events?${params}`).then((res) => res.json());
+  let data;
+  try {
+    const res = await fetch(`/api/events?${params}`);
+    data = await res.json();
+  } catch (error) {
+    $('#status').textContent = 'Could not reach the events API';
+    $('#errors').innerHTML = `<p class="warn">${esc(error.message)}</p>`;
+    return;
+  }
   $('#status').textContent = `Updated ${data.updatedAt ? new Date(data.updatedAt).toLocaleTimeString('en-GB') : 'never'} · ${data.events.length} events`;
-  $('#errors').innerHTML = data.errors?.length
-    ? `<p class="warn">Some sources are temporarily unavailable: ${data.errors.map((x) => esc(x.source)).join(', ')}</p>`
-    : '';
+  const bits = [];
+  if (data.errors?.length) bits.push(`Some sources failed: ${data.errors.map((x) => esc(x.source)).join(', ')}`);
+  if (!data.events.length) bits.push('No events parsed yet. Hit Refresh now, then open /api/health if it stays empty.');
+  $('#errors').innerHTML = bits.map((b) => `<p class="warn">${b}</p>`).join('');
   const root = $('#events');
   root.innerHTML = '';
   for (const event of data.events) {
@@ -47,7 +56,7 @@ $('#refresh').onclick = async () => {
   const button = $('#refresh');
   button.disabled = true;
   button.textContent = 'Refreshing…';
-  await fetch('/api/refresh', { method: 'POST' });
+  try { await fetch('/api/refresh', { method: 'POST' }); } catch {}
   button.disabled = false;
   button.textContent = 'Refresh now';
   load();
