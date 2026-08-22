@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Leeds Live Events</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <p class="eyebrow">COMMUNITY RADAR</p>
+        <h1>Leeds Live Events</h1>
+        <p id="status">Loading public listings…</p>
+      </div>
+      <button id="refresh" type="button">Refresh now</button>
+    </header>
+    <section class="filters">
+      <input id="q" placeholder="Search music, tech, sober, art…" />
+      <select id="source">
+        <option value="">All sources</option>
+        <option value="meetup">Meetup</option>
+        <option value="eventbrite">Eventbrite</option>
+        <option value="fatsoma">Fatsoma</option>
+        <option value="visit-leeds">Visit Leeds</option>
+      </select>
+    </section>
+    <section id="errors"></section>
+    <section id="events" class="grid"></section>
+  </main>
+  <template id="card">
+    <article>
+      <p class="tag"></p>
+      <h2></h2>
+      <p class="when"></p>
+      <p class="venue"></p>
+      <p class="desc"></p>
+      <a target="_blank" rel="noopener">View event ↗</a>
+    </article>
+  </template>
+  <script src="/app.js"></script>
+</body>
+</html>
