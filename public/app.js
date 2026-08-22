@@ -26,6 +26,18 @@ function esc(value = '') {
   return div.innerHTML;
 }
 
+function groupSlug(event) {
+  const match = String(event.url || '').match(/meetup\.com\/([^/?#]+)/i);
+  if (!match) return null;
+  const slug = decodeURIComponent(match[1]).toLowerCase();
+  if (['find', 'topics', 'events', 'cities', 'login'].includes(slug)) return null;
+  return slug;
+}
+
+function groupName(slug) {
+  return slug.replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 function enrich(event) {
   const hay = `${event.title} ${event.venue} ${event.description} ${event.source}`;
   const start = event.startAt ? new Date(event.startAt) : null;
@@ -33,6 +45,7 @@ function enrich(event) {
   const dow = start && !Number.isNaN(start.getTime()) ? start.getDay() : null;
   const categories = Object.entries(CATS).filter(([, re]) => re.test(hay)).map(([k]) => k);
   if (!categories.length) categories.push('social');
+  const slug = event.source === 'meetup' ? groupSlug(event) : null;
   return {
     ...event,
     start,
@@ -42,6 +55,7 @@ function enrich(event) {
     thuSat: dow === 4 || dow === 5 || dow === 6,
     rival: RIVALS.test(hay) || event.source === 'meetup',
     categories,
+    slug,
   };
 }
 
@@ -64,14 +78,42 @@ function selected() {
     if (thuSat && event.dow !== null && !event.thuSat) return false;
     if (rivals && !event.rival) return false;
     if (when === 'week' && event.start && (event.start < now || event.start > weekEnd)) return false;
-    if (when === 'weekend') {
-      if (event.dow !== 5 && event.dow !== 6 && event.dow !== 0) return false;
-    }
-    if (when === 'september') {
-      if (!event.start || event.start.getMonth() !== 8 || event.start.getFullYear() !== 2026) return false;
-    }
+    if (when === 'weekend' && event.dow !== 5 && event.dow !== 6 && event.dow !== 0) return false;
+    if (when === 'september' && (!event.start || event.start.getMonth() !== 8 || event.start.getFullYear() !== 2026)) return false;
     return true;
   });
+}
+
+function topGroups(events) {
+  const map = new Map();
+  for (const event of events) {
+    if (!event.slug) continue;
+    const row = map.get(event.slug) || { slug: event.slug, name: groupName(event.slug), count: 0, next: null };
+    row.count += 1;
+    if (event.start && (!row.next || event.start < row.next.start)) row.next = event;
+    map.set(event.slug, row);
+  }
+  return [...map.values()].sort((a, b) => b.count - a.count || (a.next?.start || 0) - (b.next?.start || 0)).slice(0, 5);
+}
+
+function renderGroups(events) {
+  const groups = topGroups(events.filter((e) => e.source === 'meetup' || e.slug));
+  if (!groups.length) {
+    $('#groups').innerHTML = '';
+    return;
+  }
+  $('#groups').innerHTML = `<h2 class="block-title">Top 5 Leeds Meetup groups</h2>
+    <div class="group-grid">
+      ${groups.map((group, i) => `
+        <article class="group-card">
+          <p class="tag">#${i + 1}</p>
+          <h3>${esc(group.name)}</h3>
+          <p>${group.count} upcoming in this filter</p>
+          <p class="when">${group.next?.start ? 'Next: ' + fmt.format(group.next.start) : 'Dates on Meetup'}</p>
+          <p class="desc">${esc(group.next?.title || '')}</p>
+          <a href="https://www.meetup.com/${esc(group.slug)}/" target="_blank" rel="noopener">Open group ↗</a>
+        </article>`).join('')}
+    </div>`;
 }
 
 function renderBoard(events) {
@@ -113,8 +155,7 @@ function renderCalendar(events) {
       ${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map((d) => `<p class="dow">${d}</p>`).join('')}
       ${days.map((day) => {
         if (!day) return '<div class="cell empty"></div>';
-        const key = day.toDateString();
-        const items = events.filter((e) => e.start && e.start.toDateString() === key);
+        const items = events.filter((e) => e.start && e.start.toDateString() === day.toDateString());
         const clashes = items.filter((e) => e.rival && e.evening);
         const heat = clashes.length >= 4 ? 'hot' : clashes.length ? 'warm' : items.length ? 'cool' : '';
         const mixer = [4,5,6].includes(day.getDay());
@@ -171,6 +212,7 @@ function renderRadar(events) {
 function paint() {
   const events = selected();
   $('#legend').textContent = `${events.length} matching · Meetup stays first · gold cards are rival Thu–Sat evenings`;
+  renderGroups(events);
   $('#board').classList.toggle('hidden', view !== 'board');
   $('#calendar').classList.toggle('hidden', view !== 'calendar');
   $('#radar').classList.toggle('hidden', view !== 'radar');

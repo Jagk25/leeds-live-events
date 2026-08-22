@@ -14,6 +14,7 @@ header { justify-content: space-between; margin-bottom: 22px; }
   color: #79f2c0; font-size: 0.76rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase;
 }
 h1 { font-size: clamp(2.2rem, 6vw, 4.2rem); margin: 0; }
+.block-title { margin: 8px 0 12px; font-size: 1.2rem; }
 #status, .legend, .hint, .venue, .desc { color: #aab4cf; }
 button, select, input {
   font: inherit; border-radius: 10px; border: 1px solid #34405f; padding: 10px 12px; background: #151d34; color: #fff;
@@ -24,15 +25,14 @@ button { cursor: pointer; }
 input { flex: 1; min-width: 180px; }
 .check { color: #d5dcf0; font-size: 0.92rem; }
 .hidden { display: none !important; }
-.grid, .cal-grid, .slots {
-  display: grid; gap: 14px;
-}
-.grid { grid-template-columns: repeat(auto-fill, minmax(255px, 1fr)); }
-article, .cell, .slot, .row {
+.grid, .cal-grid, .slots, .group-grid { display: grid; gap: 14px; }
+.grid, .group-grid { grid-template-columns: repeat(auto-fill, minmax(255px, 1fr)); }
+.groups { margin: 8px 0 22px; }
+article, .cell, .slot, .row, .group-card {
   border: 1px solid #27324f; border-radius: 14px; background: #121a2e;
 }
-article, .slot { min-height: 220px; padding: 16px; display: flex; flex-direction: column; gap: 6px; }
-h2 { font-size: 1.08rem; margin: 4px 0 8px; }
+article, .slot, .group-card { min-height: 180px; padding: 16px; display: flex; flex-direction: column; gap: 6px; }
+h2, h3 { font-size: 1.08rem; margin: 4px 0 8px; }
 .when { font-weight: 700; color: #f6cd72; }
 a { color: #79f2c0; font-weight: 700; text-decoration: none; }
 .warn { padding: 12px; border-radius: 8px; background: #402b24; color: #ffd5c2; }
