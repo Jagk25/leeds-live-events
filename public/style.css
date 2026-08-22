@@ -9,60 +9,61 @@
   --clear: #163028;
   --busy: #3a2a12;
   --hot: #3a1420;
+  --amber: #ffb000;
 }
 * { box-sizing: border-box; }
 body {
   margin: 0;
-  background:
-    radial-gradient(1200px 500px at 10% -10%, #ff3d7f22, transparent 50%),
-    var(--bg);
+  background: radial-gradient(1200px 500px at 10% -10%, #ff3d7f22, transparent 50%), var(--bg);
   color: var(--ink);
   font-family: Syne, system-ui, sans-serif;
 }
 main { max-width: 1180px; margin: auto; padding: 36px 20px 90px; }
-.kicker, .eyebrow, .tag, .dow {
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
-  color: var(--pink);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  font-size: 0.72rem;
-  font-weight: 600;
-}
+.kicker, .eyebrow, .tag, .dow, .panel-title { font-family: "IBM Plex Mono", ui-monospace, monospace; color: var(--pink); letter-spacing: 0.14em; text-transform: uppercase; font-size: 0.72rem; font-weight: 600; }
+.panel-title { margin: 0 0 12px; }
 h1 { font-size: clamp(2.6rem, 8vw, 5.4rem); line-height: 0.9; margin: 8px 0; }
-.block-title { font-size: 1.15rem; margin: 6px 0 12px; }
+.block-title { font-size: 1.15rem; margin: 6px 0 12px; color: var(--ink); font-family: Syne, sans-serif; text-transform: none; letter-spacing: 0; }
 #status, .legend, .hint, .venue, .desc { color: var(--muted); font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 0.86rem; }
-header, .actions, .filters, .views, .cal-head, .stats {
-  display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
-}
-header { justify-content: space-between; margin-bottom: 18px; }
-button, select, input, .ghost {
-  font: 600 0.95rem Syne, system-ui, sans-serif;
-  border-radius: 999px;
-  border: 1px solid var(--line);
-  padding: 10px 14px;
-  background: #100d11;
-  color: var(--ink);
-}
+header, .actions, .filters-row, .views, .cal-head, .stats { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+header { justify-content: space-between; margin-bottom: 22px; }
+button, select, input, .ghost { font: 600 0.95rem Syne, system-ui, sans-serif; border-radius: 999px; border: 1px solid var(--line); padding: 10px 14px; background: #100d11; color: var(--ink); }
 button, .ghost { cursor: pointer; text-decoration: none; }
 #refresh, .views .active { background: var(--pink); color: #14030a; border-color: var(--pink); }
-.filters { margin: 16px 0 8px; }
 input { flex: 1; min-width: 180px; border-radius: 12px; }
 .check { color: var(--muted); font-size: 0.88rem; }
 .hidden { display: none !important; }
+
+.panel { border: 1px solid var(--line); border-radius: 18px; background: #0c0a0d; padding: 18px; margin: 18px 0; }
+.filters-row { margin-bottom: 10px; }
+.filters-row.checks { margin-bottom: 0; }
+
+.board-frame { border: 1px solid #2a2117; border-radius: 18px; background: #0a0806; padding: 14px 18px; margin-bottom: 20px; box-shadow: inset 0 0 40px #00000080; }
+.board-head { font-family: "IBM Plex Mono", monospace; color: var(--amber); font-size: 0.72rem; letter-spacing: 0.16em; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.board-head .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--amber); box-shadow: 0 0 8px var(--amber); animation: blink 1.4s infinite; }
+.ticker { overflow: hidden; border-radius: 10px; background: #050403; padding: 10px 0; position: relative; }
+.ticker::before { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(180deg, #ffffff05 0px, transparent 2px, transparent 4px); pointer-events: none; }
+.ticker-track { display: inline-flex; gap: 46px; white-space: nowrap; font-family: "Share Tech Mono", monospace; color: var(--amber); font-size: 1.05rem; text-shadow: 0 0 6px #ffb00088; padding-left: 100%; animation: scroll-left 42s linear infinite; }
+.ticker-track span.flight-no { color: var(--pink); margin-right: 10px; }
+.ticker-track span.sep { color: #6a4b12; margin: 0 8px; }
+@keyframes scroll-left { from { transform: translateX(0); } to { transform: translateX(-100%); } }
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+
 .grid, .cal-grid, .slots, .group-grid, .stats { display: grid; gap: 12px; }
 .grid, .group-grid, .slots { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
-article, .cell, .slot, .row, .group-card, .watch, .stat {
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  background: var(--card);
-}
+article, .cell, .slot, .row, .group-card, .watch, .stat { border: 1px solid var(--line); border-radius: 16px; background: var(--card); }
 article, .slot, .group-card, .watch, .stat { padding: 16px; }
-article, .slot, .group-card { min-height: 176px; display: flex; flex-direction: column; gap: 6px; }
+article, .slot, .group-card { min-height: 176px; display: flex; flex-direction: column; gap: 6px; border-left: 3px solid var(--line); }
 .when { color: var(--gold); font-weight: 700; }
 a { color: var(--pink); font-weight: 700; text-decoration: none; }
 .warn { padding: 12px; border-radius: 10px; background: #3a1420; color: #ffd0dc; }
-.watch { margin: 8px 0 16px; border-color: var(--pink); }
+.watch { margin: 8px 0 4px; border-color: var(--pink); }
 .clash, .group-card.watch-hit { border-color: var(--gold); }
+
+.swatches { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+.swatch { width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid #ffffff33; cursor: pointer; padding: 0; }
+.swatch.active { outline: 2px solid #fff; outline-offset: 1px; }
+.swatch.none { background: #2a2428; }
+
 .cal-grid { grid-template-columns: repeat(7, 1fr); }
 .cell { min-height: 90px; padding: 10px; text-align: left; }
 .cell.cool { background: var(--clear); }
@@ -76,7 +77,4 @@ a { color: var(--pink); font-weight: 700; text-decoration: none; }
 .slot.clash { background: var(--hot); }
 .stats { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); margin-bottom: 16px; }
 .stat strong { display: block; font-size: 1.8rem; }
-@media (max-width: 700px) {
-  header, .filters { flex-direction: column; align-items: stretch; }
-  .cal-grid { grid-template-columns: repeat(2, 1fr); }
-}
+@media (max-width: 700px) { header, .filters-row { flex-direction: column; align-items: stretch; } .cal-grid { grid-template-columns: repeat(2, 1fr); } }

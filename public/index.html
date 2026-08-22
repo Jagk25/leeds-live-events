@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>The Signal // Paradise Glitch Radar</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Syne:wght@600;700;800&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Share+Tech+Mono&family=Syne:wght@600;700;800&display=swap" />
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
@@ -23,6 +23,11 @@
       </div>
     </header>
 
+    <section class="board-frame">
+      <div class="board-head"><span class="dot"></span> DEPARTURES · LEEDS SOCIAL LINE</div>
+      <div id="ticker" class="ticker"><div class="ticker-track">Loading the board…</div></div>
+    </section>
+
     <nav class="views">
       <button type="button" data-view="board" class="active">Board</button>
       <button type="button" data-view="calendar">Calendar</button>
@@ -32,42 +37,56 @@
 
     <section id="watch" class="watch"></section>
 
-    <section class="filters">
-      <input id="q" placeholder="Search the room…" />
-      <select id="source">
-        <option value="">All sources</option>
-        <option value="meetup">Meetup</option>
-        <option value="eventbrite">Eventbrite</option>
-        <option value="fatsoma">Fatsoma</option>
-        <option value="visit-leeds">Visit Leeds</option>
-        <option value="skiddle">Skiddle</option>
-        <option value="leeds-uni">Leeds Uni</option>
-      </select>
-      <select id="category">
-        <option value="">All categories</option>
-        <option value="social">Social / mixer</option>
-        <option value="tech">Tech</option>
-        <option value="music">Music / club</option>
-        <option value="games">Games / nerd</option>
-        <option value="outdoors">Outdoors</option>
-        <option value="dating">Dating</option>
-        <option value="arts">Arts</option>
-      </select>
-      <select id="when">
-        <option value="">Any date</option>
-        <option value="week">This week</option>
-        <option value="weekend">This weekend</option>
-        <option value="september">September 2026</option>
-      </select>
-      <label class="check"><input id="evening" type="checkbox" checked /> Mixer hours</label>
-      <label class="check"><input id="thuSat" type="checkbox" /> Thu–Sat</label>
-      <label class="check"><input id="rivals" type="checkbox" /> Competitors</label>
+    <section class="panel filters">
+      <p class="panel-title">02 // filter the room</p>
+      <div class="filters-row">
+        <input id="q" placeholder="Search the room…" />
+        <select id="source">
+          <option value="">All sources</option>
+          <option value="meetup">Meetup</option>
+          <option value="eventbrite">Eventbrite</option>
+          <option value="fatsoma">Fatsoma</option>
+          <option value="visit-leeds">Visit Leeds</option>
+          <option value="skiddle">Skiddle</option>
+          <option value="leeds-uni">Leeds Uni</option>
+        </select>
+        <select id="category">
+          <option value="">All categories</option>
+          <option value="social">Social / mixer</option>
+          <option value="tech">Tech</option>
+          <option value="music">Music / club</option>
+          <option value="games">Games / nerd</option>
+          <option value="outdoors">Outdoors</option>
+          <option value="dating">Dating</option>
+          <option value="arts">Arts</option>
+        </select>
+        <select id="when">
+          <option value="">Any date</option>
+          <option value="week">This week</option>
+          <option value="weekend">This weekend</option>
+          <option value="september">September 2026</option>
+        </select>
+      </div>
+      <div class="filters-row checks">
+        <label class="check"><input id="evening" type="checkbox" checked /> Mixer hours</label>
+        <label class="check"><input id="thuSat" type="checkbox" /> Thu–Sat</label>
+        <label class="check"><input id="rivals" type="checkbox" /> Competitors</label>
+        <label class="check"><input id="tagged" type="checkbox" /> Tagged groups only</label>
+      </div>
     </section>
 
     <section id="errors"></section>
     <section id="legend" class="legend"></section>
-    <section id="groups" class="groups"></section>
-    <section id="board" class="grid"></section>
+
+    <section class="panel">
+      <p class="panel-title">03 // top groups — tap a dot to tag</p>
+      <section id="groups" class="groups"></section>
+    </section>
+
+    <section class="panel">
+      <p class="panel-title">04 // the feed</p>
+      <section id="board" class="grid"></section>
+    </section>
     <section id="calendar" class="calendar hidden"></section>
     <section id="radar" class="radar hidden"></section>
     <section id="analytics" class="analytics hidden"></section>
