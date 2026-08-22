@@ -3,34 +3,65 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Leeds Live Events</title>
+  <title>Paradise Glitch Radar</title>
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
   <main>
     <header>
       <div>
-        <p class="eyebrow">MEETUP FIRST</p>
+        <p class="eyebrow">PARADISE GLITCH RADAR</p>
         <h1>Leeds Live Events</h1>
-        <p id="status">Loading Meetup iCal/RSS and other public listings…</p>
+        <p id="status">Loading public listings…</p>
       </div>
       <button id="refresh" type="button">Refresh now</button>
     </header>
+
+    <nav class="views" aria-label="Views">
+      <button type="button" data-view="board" class="active">Board</button>
+      <button type="button" data-view="calendar">Calendar</button>
+      <button type="button" data-view="radar">Clash radar</button>
+    </nav>
+
     <section class="filters">
-      <input id="q" placeholder="Search music, tech, sober, art…" />
+      <input id="q" placeholder="Search social, tech, sober, venue…" />
       <select id="source">
-        <option value="meetup">Meetup first</option>
         <option value="">All sources</option>
+        <option value="meetup">Meetup</option>
         <option value="eventbrite">Eventbrite</option>
         <option value="fatsoma">Fatsoma</option>
         <option value="visit-leeds">Visit Leeds</option>
         <option value="skiddle">Skiddle</option>
         <option value="leeds-uni">Leeds Uni</option>
       </select>
+      <select id="category">
+        <option value="">All categories</option>
+        <option value="social">Social / mixer</option>
+        <option value="tech">Tech</option>
+        <option value="music">Music / club</option>
+        <option value="games">Games / nerd</option>
+        <option value="outdoors">Outdoors</option>
+        <option value="dating">Dating</option>
+        <option value="arts">Arts</option>
+      </select>
+      <select id="when">
+        <option value="">Any date</option>
+        <option value="week">This week</option>
+        <option value="weekend">This weekend</option>
+        <option value="september">September 2026</option>
+      </select>
+      <label class="check"><input id="evening" type="checkbox" checked /> Mixer hours (6pm–late)</label>
+      <label class="check"><input id="thuSat" type="checkbox" /> Thu–Sat only</label>
+      <label class="check"><input id="rivals" type="checkbox" /> Competitors only</label>
     </section>
+
     <section id="errors"></section>
-    <section id="events" class="grid"></section>
+    <section id="legend" class="legend"></section>
+    <section id="board" class="grid"></section>
+    <section id="calendar" class="calendar hidden"></section>
+    <section id="radar" class="radar hidden"></section>
   </main>
+
   <template id="card">
     <article>
       <p class="tag"></p>
