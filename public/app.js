@@ -100,7 +100,7 @@ function topGroups(events) {
     if (event.start && (!row.next || event.start < row.next.start)) row.next = event;
     map.set(event.slug, row);
   }
-  return [...map.values()].sort((a, b) => Number(b.getsocial) - Number(a.getsocial) || b.count - a.count).slice(0, 6);
+  return [...map.values()].sort((a, b) => Number(b.getsocial) - Number(a.getsocial) || b.count - a.count).slice(0, 8);
 }
 function renderTicker(events) {
   const upcoming = [...events].filter((e) => e.start).sort((a, b) => a.start - b.start).slice(0, 14);
@@ -112,11 +112,11 @@ function renderTicker(events) {
 function renderWatch(events) {
   const gs = events.filter((e) => e.getsocial).sort((a, b) => (a.start || 0) - (b.start || 0));
   if (!gs.length) {
-    $('#watch').innerHTML = `<p class="tag">01 // watch</p><h2>GetSocial Leeds</h2><p>No GetSocial listings in this filter. They still rank first when they appear.</p>`;
+    $('#watch').innerHTML = `<p class="tag">watch</p><p><strong>GetSocial Leeds</strong> — no listings in this filter. Still ranks first when it appears.</p>`;
     return;
   }
   const next = gs[0];
-  $('#watch').innerHTML = `<p class="tag">01 // watch</p><h2>GetSocial Leeds · ${gs.length} upcoming</h2><p class="when">Next: ${next.start ? fmt.format(next.start) : 'date on listing'}</p><p>${esc(next.title)}</p><a href="${esc(next.url)}" target="_blank" rel="noopener">Open their next night ↗</a>`;
+  $('#watch').innerHTML = `<p class="tag">watch · ${gs.length} upcoming</p><p><strong>GetSocial Leeds</strong> — next ${next.start ? fmt.format(next.start) : 'date on listing'}: ${esc(next.title)} · <a href="${esc(next.url)}" target="_blank" rel="noopener">open ↗</a></p>`;
 }
 function swatchRow(slug, current) {
   return `<div class="swatches" data-slug="${esc(slug)}">` +
@@ -126,32 +126,29 @@ function swatchRow(slug, current) {
 }
 function renderGroups(events) {
   const groups = topGroups(events);
-  if (!groups.length) { $('#groups').innerHTML = '<p class="hint">No Meetup groups in this filter yet.</p>'; return; }
-  $('#groups').innerHTML = groups.map((g, i) => {
+  $('#groups').innerHTML = groups.length ? groups.map((g, i) => {
     const color = groupColors[g.slug];
     return `<article class="group-card ${g.getsocial ? 'watch-hit' : ''}" style="${color ? `border-left-color:${color}` : ''}">
-      <p class="tag">#${i + 1}${g.getsocial ? ' · getsocial' : ''}</p>
+      <p class="tag">#${i + 1}${g.getsocial ? ' · gs' : ''}</p>
       <h3>${esc(g.name)}</h3>
-      <p>${g.count} in this filter</p>
-      <p class="when">${g.next?.start ? 'Next: ' + fmt.format(g.next.start) : 'Dates on Meetup'}</p>
-      <p class="desc">${esc(g.next?.title || '')}</p>
+      <p class="desc">${g.count} in filter · ${g.next?.start ? fmt.format(g.next.start) : 'dates on Meetup'}</p>
       ${swatchRow(g.slug, color)}
-      <a href="https://www.meetup.com/${esc(g.slug)}/" target="_blank" rel="noopener">Open group ↗</a>
+      <a href="https://www.meetup.com/${esc(g.slug)}/" target="_blank" rel="noopener">Open ↗</a>
     </article>`;
-  }).join('');
+  }).join('') : '<p class="hint" style="padding:0 4px 8px">No Meetup groups in this filter yet.</p>';
   $('#groups').querySelectorAll('.swatch').forEach((btn) => {
-    btn.onclick = () => setGroupColor(btn.closest('.swatches').dataset.slug, btn.dataset.color || null);
+    btn.onclick = (ev) => { ev.stopPropagation(); setGroupColor(btn.closest('.swatches').dataset.slug, btn.dataset.color || null); };
   });
 }
 function renderBoard(events) {
   const root = $('#board'); root.innerHTML = '';
   for (const event of events.slice(0, 180)) {
     const node = $('#card').content.cloneNode(true);
-    node.querySelector('.tag').textContent = `${event.source}${event.getsocial ? ' · getsocial' : event.rival ? ' · rival' : ''}`;
+    node.querySelector('.tag').textContent = `${event.source}${event.getsocial ? ' · gs' : event.rival ? ' · rival' : ''}`;
     node.querySelector('h2').textContent = event.title;
     node.querySelector('.when').textContent = event.start ? fmt.format(event.start) : 'Date on listing';
     node.querySelector('.venue').textContent = [event.venue, event.address].filter(Boolean).join(' · ');
-    node.querySelector('.desc').textContent = event.description?.slice(0, 180) || event.categories.join(', ');
+    node.querySelector('.desc').textContent = event.description?.slice(0, 140) || event.categories.join(', ');
     node.querySelector('a').href = event.url;
     const art = node.querySelector('article');
     if (event.getsocial || (event.rival && event.thuSat && event.evening)) art.classList.add('clash');
@@ -176,7 +173,7 @@ function renderCalendar(events) {
     const items = events.filter((e) => e.start && e.start.toDateString() === day.toDateString());
     const clashes = items.filter((e) => e.rival && e.evening);
     const heat = clashes.length >= 4 ? 'hot' : clashes.length ? 'warm' : items.length ? 'cool' : '';
-    return `<button type="button" class="cell ${heat} ${[4,5,6].includes(day.getDay()) ? 'mixer-day' : ''}" data-day="${day.toISOString()}"><strong>${day.getDate()}</strong><span>${items.length} events</span><em>${clashes.length ? clashes.length + ' rival evenings' : 'clear evening'}</em></button>`;
+    return `<button type="button" class="cell ${heat} ${[4,5,6].includes(day.getDay()) ? 'mixer-day' : ''}" data-day="${day.toISOString()}"><strong>${day.getDate()}</strong><span>${items.length} ev</span><em>${clashes.length || ''}</em></button>`;
   }).join('')}</div><div id="dayList"></div>`;
   $('#prevMonth').onclick = () => { month = new Date(month.getFullYear(), month.getMonth() - 1, 1); paint(); };
   $('#nextMonth').onclick = () => { month = new Date(month.getFullYear(), month.getMonth() + 1, 1); paint(); };
@@ -197,11 +194,11 @@ function renderRadar(events) {
     const status = rivals.length >= 3 ? 'Clash' : rivals.length ? 'Busy' : 'Clear';
     slots.push({ day, items, rivals, status });
   }
-  $('#radar').innerHTML = `<p class="hint">Thursday–Saturday evenings for Core Socials. Green nights first.</p><div class="slots">${slots.map((slot) => `<article class="slot ${slot.status.toLowerCase()}"><p class="tag">${slot.status}</p><h2>${esc(dayFmt.format(slot.day))}</h2><p>${slot.rivals.length} rival evenings · ${slot.items.length} after 5pm</p><ul>${slot.rivals.slice(0,4).map((e) => `<li><a href="${esc(e.url)}" target="_blank" rel="noopener">${esc(e.title)}${e.getsocial ? ' · GetSocial' : ''}</a></li>`).join('') || '<li>No obvious social competitor</li>'}</ul></article>`).join('')}</div>`;
+  $('#radar').innerHTML = `<p class="hint">Thursday–Saturday evenings. Green nights first.</p><div class="slots">${slots.map((slot) => `<article class="slot ${slot.status.toLowerCase()}"><p class="tag">${slot.status}</p><h2>${esc(dayFmt.format(slot.day))}</h2><p class="desc">${slot.rivals.length} rival · ${slot.items.length} total</p><ul>${slot.rivals.slice(0,4).map((e) => `<li><a href="${esc(e.url)}" target="_blank" rel="noopener">${esc(e.title)}</a></li>`).join('') || '<li>No obvious competitor</li>'}</ul></article>`).join('')}</div>`;
 }
 function renderAnalytics() {
   const a = analytics;
-  if (!a) { $('#analytics').innerHTML = '<p>Analytics warming up…</p>'; return; }
+  if (!a) { $('#analytics').innerHTML = '<p class="hint">Analytics warming up…</p>'; return; }
   $('#analytics').innerHTML = `<div class="stats">
     <div class="stat"><p class="tag">Events</p><strong>${a.totals?.events || 0}</strong></div>
     <div class="stat"><p class="tag">Evenings</p><strong>${a.totals?.evening || 0}</strong></div>
@@ -211,12 +208,12 @@ function renderAnalytics() {
   </div>
   <p class="hint">Sources: ${Object.entries(a.sources || {}).map(([k,v]) => k + ' ' + v).join(' · ') || 'none'}</p>
   <p class="hint">${(a.errors || []).length ? 'Soft errors: ' + a.errors.map((e) => e.source || e.scope).join(', ') : 'All sources answered.'}</p>
-  <h2 class="block-title">GetSocial next</h2>
+  <p class="block-title" style="margin-top:14px">GetSocial next</p>
   <p>${a.getsocial?.next ? esc(a.getsocial.next.title) + ' · ' + (a.getsocial.next.startAt ? fmt.format(new Date(a.getsocial.next.startAt)) : '') : 'No dated GetSocial event in the current scrape.'}</p>`;
 }
 function paint() {
   const events = selected();
-  $('#legend').textContent = `${events.length} matching · GetSocial pinned · gold = clash risk · coloured groups you tagged`;
+  $('#legend').textContent = `${events.length} matching · GetSocial pinned · gold = clash risk · dots = your tags`;
   renderTicker(events);
   renderWatch(events);
   renderGroups(events);
@@ -263,9 +260,28 @@ document.querySelectorAll('.views button').forEach((btn) => {
   });
 });
 $('#refresh').onclick = async () => {
-  const button = $('#refresh'); button.disabled = true; button.textContent = 'Refreshing…';
+  const button = $('#refresh'); button.disabled = true; const original = button.textContent; button.textContent = '…';
   try { await fetch('/api/refresh', { method: 'POST' }); } catch {}
-  button.disabled = false; button.textContent = 'Refresh now'; load();
+  button.disabled = false; button.textContent = original; load();
 };
+
+const widgetUrl = `${location.origin}/widget`;
+$('#shareBtn').onclick = () => {
+  $('#embedCode').value = `<iframe src="${widgetUrl}" width="320" height="420" style="border:0;border-radius:14px;overflow:hidden" loading="lazy"></iframe>`;
+  $('#openWidget').href = widgetUrl;
+  $('#shareModal').classList.remove('hidden');
+};
+$('#closeModal').onclick = () => $('#shareModal').classList.add('hidden');
+$('#shareModal').addEventListener('click', (e) => { if (e.target.id === 'shareModal') $('#shareModal').classList.add('hidden'); });
+$('#copyEmbed').onclick = async () => {
+  const field = $('#embedCode');
+  field.select();
+  try {
+    await navigator.clipboard.writeText(field.value);
+    const btn = $('#copyEmbed'); const original = btn.textContent;
+    btn.textContent = 'Copied!'; setTimeout(() => { btn.textContent = original; }, 1600);
+  } catch { document.execCommand('copy'); }
+};
+
 load();
 setInterval(load, 120000);
