@@ -1,4 +1,48 @@
 const $ = (s) => document.querySelector(s);
+
+// Share widget + sidebar toggle wired first and defensively, so a later
+// rendering error can never block these controls.
+try {
+  const shareBtn = $('#shareBtn');
+  const shareModal = $('#shareModal');
+  const embedCode = $('#embedCode');
+  const openWidget = $('#openWidget');
+  const closeModal = $('#closeModal');
+  const copyEmbed = $('#copyEmbed');
+  const widgetUrl = `${location.origin}/widget.html`;
+
+  if (shareBtn && shareModal) {
+    shareBtn.onclick = () => {
+      if (embedCode) embedCode.value = `<iframe src="${widgetUrl}" width="320" height="420" style="border:0;border-radius:14px;overflow:hidden" loading="lazy"></iframe>`;
+      if (openWidget) openWidget.href = widgetUrl;
+      shareModal.classList.remove('hidden');
+    };
+  }
+  if (closeModal && shareModal) closeModal.onclick = () => shareModal.classList.add('hidden');
+  if (shareModal) shareModal.addEventListener('click', (e) => { if (e.target === shareModal) shareModal.classList.add('hidden'); });
+  if (copyEmbed && embedCode) {
+    copyEmbed.onclick = async () => {
+      embedCode.select();
+      try {
+        await navigator.clipboard.writeText(embedCode.value);
+      } catch {
+        try { document.execCommand('copy'); } catch {}
+      }
+      const original = copyEmbed.textContent;
+      copyEmbed.textContent = 'Copied!';
+      setTimeout(() => { copyEmbed.textContent = original; }, 1600);
+    };
+  }
+
+  const sidebar = $('#sidebar');
+  const scrim = $('#sidebarScrim');
+  const toggle = $('#sidebarToggle');
+  function closeSidebar() { sidebar?.classList.remove('open'); scrim?.classList.remove('visible'); }
+  function openSidebar() { sidebar?.classList.add('open'); scrim?.classList.add('visible'); }
+  if (toggle) toggle.onclick = () => (sidebar?.classList.contains('open') ? closeSidebar() : openSidebar());
+  if (scrim) scrim.onclick = closeSidebar;
+} catch (e) { console.error('UI wiring failed', e); }
+
 const fmt = new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 const timeFmt = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit' });
 const dayFmt = new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
@@ -26,12 +70,8 @@ function esc(value = '') {
   div.textContent = value;
   return div.innerHTML;
 }
-function loadColors() {
-  try { return JSON.parse(localStorage.getItem(COLOR_KEY) || '{}'); } catch { return {}; }
-}
-function saveColors(map) {
-  try { localStorage.setItem(COLOR_KEY, JSON.stringify(map)); } catch {}
-}
+function loadColors() { try { return JSON.parse(localStorage.getItem(COLOR_KEY) || '{}'); } catch { return {}; } }
+function saveColors(map) { try { localStorage.setItem(COLOR_KEY, JSON.stringify(map)); } catch {} }
 let groupColors = loadColors();
 function setGroupColor(slug, color) {
   if (color) groupColors[slug] = color; else delete groupColors[slug];
@@ -59,8 +99,7 @@ function enrich(event) {
     evening: hour === null || hour >= 17,
     thuSat: dow === 4 || dow === 5 || dow === 6,
     rival: RIVALS.test(hay) || event.source === 'meetup',
-    categories,
-    slug,
+    categories, slug,
     color: slug ? groupColors[slug] : null,
     getsocial: event.watch === 'getsocial' || /getsocial/i.test(hay + (slug || '')),
   };
@@ -111,12 +150,9 @@ function renderTicker(events) {
 }
 function renderWatch(events) {
   const gs = events.filter((e) => e.getsocial).sort((a, b) => (a.start || 0) - (b.start || 0));
-  if (!gs.length) {
-    $('#watch').innerHTML = `<p class="tag">watch</p><p><strong>GetSocial Leeds</strong> — no listings in this filter. Still ranks first when it appears.</p>`;
-    return;
-  }
+  if (!gs.length) { $('#watch').innerHTML = `<span class="tag">watch</span> GetSocial Leeds — no listings in this filter. Still ranks first when it appears.`; return; }
   const next = gs[0];
-  $('#watch').innerHTML = `<p class="tag">watch · ${gs.length} upcoming</p><p><strong>GetSocial Leeds</strong> — next ${next.start ? fmt.format(next.start) : 'date on listing'}: ${esc(next.title)} · <a href="${esc(next.url)}" target="_blank" rel="noopener">open ↗</a></p>`;
+  $('#watch').innerHTML = `<span class="tag">watch · ${gs.length}</span> GetSocial Leeds — next ${next.start ? fmt.format(next.start) : 'date on listing'}: ${esc(next.title)} · <a href="${esc(next.url)}" target="_blank" rel="noopener">open ↗</a>`;
 }
 function swatchRow(slug, current) {
   return `<div class="swatches" data-slug="${esc(slug)}">` +
@@ -128,31 +164,31 @@ function renderGroups(events) {
   const groups = topGroups(events);
   $('#groups').innerHTML = groups.length ? groups.map((g, i) => {
     const color = groupColors[g.slug];
-    return `<article class="group-card ${g.getsocial ? 'watch-hit' : ''}" style="${color ? `border-left-color:${color}` : ''}">
-      <p class="tag">#${i + 1}${g.getsocial ? ' · gs' : ''}</p>
+    return `<div class="group-row ${g.getsocial ? 'watch-hit' : ''}" style="${color ? `border-left-color:${color}` : ''}">
+      <div class="g-top"><span class="tag">#${i + 1}${g.getsocial ? ' · gs' : ''}</span></div>
       <h3>${esc(g.name)}</h3>
       <p class="desc">${g.count} in filter · ${g.next?.start ? fmt.format(g.next.start) : 'dates on Meetup'}</p>
       ${swatchRow(g.slug, color)}
       <a href="https://www.meetup.com/${esc(g.slug)}/" target="_blank" rel="noopener">Open ↗</a>
-    </article>`;
-  }).join('') : '<p class="hint" style="padding:0 4px 8px">No Meetup groups in this filter yet.</p>';
+    </div>`;
+  }).join('') : '<p class="hint">No Meetup groups in this filter yet.</p>';
   $('#groups').querySelectorAll('.swatch').forEach((btn) => {
     btn.onclick = (ev) => { ev.stopPropagation(); setGroupColor(btn.closest('.swatches').dataset.slug, btn.dataset.color || null); };
   });
 }
 function renderBoard(events) {
   const root = $('#board'); root.innerHTML = '';
-  for (const event of events.slice(0, 180)) {
-    const node = $('#card').content.cloneNode(true);
-    node.querySelector('.tag').textContent = `${event.source}${event.getsocial ? ' · gs' : event.rival ? ' · rival' : ''}`;
+  for (const event of events.slice(0, 200)) {
+    const node = $('#row').content.cloneNode(true);
+    node.querySelector('.col-time .tag').textContent = `${event.source}${event.getsocial ? ' · gs' : event.rival ? ' · rival' : ''}`;
+    node.querySelector('.col-time .when').textContent = event.start ? fmt.format(event.start) : 'Date on listing';
     node.querySelector('h2').textContent = event.title;
-    node.querySelector('.when').textContent = event.start ? fmt.format(event.start) : 'Date on listing';
     node.querySelector('.venue').textContent = [event.venue, event.address].filter(Boolean).join(' · ');
-    node.querySelector('.desc').textContent = event.description?.slice(0, 140) || event.categories.join(', ');
-    node.querySelector('a').href = event.url;
-    const art = node.querySelector('article');
-    if (event.getsocial || (event.rival && event.thuSat && event.evening)) art.classList.add('clash');
-    if (event.color) art.style.borderLeftColor = event.color;
+    const openLink = node.querySelector('.col-open');
+    openLink.href = event.url;
+    const row = node.querySelector('.event-row');
+    if (event.getsocial || (event.rival && event.thuSat && event.evening)) row.classList.add('clash');
+    if (event.color) row.style.borderLeftColor = event.color;
     root.append(node);
   }
 }
@@ -208,7 +244,7 @@ function renderAnalytics() {
   </div>
   <p class="hint">Sources: ${Object.entries(a.sources || {}).map(([k,v]) => k + ' ' + v).join(' · ') || 'none'}</p>
   <p class="hint">${(a.errors || []).length ? 'Soft errors: ' + a.errors.map((e) => e.source || e.scope).join(', ') : 'All sources answered.'}</p>
-  <p class="block-title" style="margin-top:14px">GetSocial next</p>
+  <p class="tag" style="margin-top:14px;display:block">GetSocial next</p>
   <p>${a.getsocial?.next ? esc(a.getsocial.next.title) + ' · ' + (a.getsocial.next.startAt ? fmt.format(new Date(a.getsocial.next.startAt)) : '') : 'No dated GetSocial event in the current scrape.'}</p>`;
 }
 function paint() {
@@ -263,24 +299,6 @@ $('#refresh').onclick = async () => {
   const button = $('#refresh'); button.disabled = true; const original = button.textContent; button.textContent = '…';
   try { await fetch('/api/refresh', { method: 'POST' }); } catch {}
   button.disabled = false; button.textContent = original; load();
-};
-
-const widgetUrl = `${location.origin}/widget`;
-$('#shareBtn').onclick = () => {
-  $('#embedCode').value = `<iframe src="${widgetUrl}" width="320" height="420" style="border:0;border-radius:14px;overflow:hidden" loading="lazy"></iframe>`;
-  $('#openWidget').href = widgetUrl;
-  $('#shareModal').classList.remove('hidden');
-};
-$('#closeModal').onclick = () => $('#shareModal').classList.add('hidden');
-$('#shareModal').addEventListener('click', (e) => { if (e.target.id === 'shareModal') $('#shareModal').classList.add('hidden'); });
-$('#copyEmbed').onclick = async () => {
-  const field = $('#embedCode');
-  field.select();
-  try {
-    await navigator.clipboard.writeText(field.value);
-    const btn = $('#copyEmbed'); const original = btn.textContent;
-    btn.textContent = 'Copied!'; setTimeout(() => { btn.textContent = original; }, 1600);
-  } catch { document.execCommand('copy'); }
 };
 
 load();
