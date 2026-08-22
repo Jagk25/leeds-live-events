@@ -3,42 +3,35 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>The Signal // Paradise Glitch Radar</title>
+  <title>Paradise Glitch · Admin Radar</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Share+Tech+Mono&family=Syne:wght@600;700;800&display=swap" />
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
-  <div class="topbar">
-    <div class="topbar-inner">
-      <div class="brand">
-        <p class="eyebrow">PARADISE GLITCH</p>
-        <p id="status">Reading the room…</p>
-      </div>
-      <nav class="views">
-        <button type="button" data-view="board" class="active">Board</button>
-        <button type="button" data-view="calendar">Cal</button>
-        <button type="button" data-view="radar">Clash</button>
-        <button type="button" data-view="analytics">Stats</button>
-      </nav>
-      <div class="actions">
-        <button id="shareBtn" type="button" class="ghost">Share widget</button>
-        <button id="refresh" type="button">Refresh</button>
-      </div>
+  <header class="topbar">
+    <button id="sidebarToggle" class="icon-btn" aria-label="Toggle filters">☰</button>
+    <div class="brand">
+      <strong>Paradise Glitch</strong>
+      <span id="status">Reading the room…</span>
     </div>
-  </div>
+    <nav class="views">
+      <button type="button" data-view="board" class="active">Board</button>
+      <button type="button" data-view="calendar">Calendar</button>
+      <button type="button" data-view="radar">Clash radar</button>
+      <button type="button" data-view="analytics">Analytics</button>
+    </nav>
+    <div class="actions">
+      <button id="shareBtn" type="button" class="ghost">Share widget</button>
+      <button id="refresh" type="button">Refresh</button>
+    </div>
+  </header>
 
-  <main>
-    <section class="board-frame">
-      <div class="board-head"><span class="dot"></span> DEPARTURES · LEEDS SOCIAL LINE</div>
-      <div id="ticker" class="ticker"><div class="ticker-track">Loading the board…</div></div>
-    </section>
-
-    <section id="watch" class="watch"></section>
-
-    <details class="panel filters" open id="filtersPanel">
-      <summary>Filter the room <span class="chev">▾</span></summary>
-      <div class="filters-row">
+  <div class="layout">
+    <div id="sidebarScrim" class="scrim hidden"></div>
+    <aside id="sidebar" class="sidebar">
+      <section class="sb-block">
+        <h4>Filter</h4>
         <input id="q" placeholder="Search the room…" />
         <select id="source">
           <option value="">All sources</option>
@@ -65,34 +58,40 @@
           <option value="weekend">This weekend</option>
           <option value="september">September 2026</option>
         </select>
+        <label class="check"><input id="evening" type="checkbox" checked /> Mixer hours (5pm+)</label>
+        <label class="check"><input id="thuSat" type="checkbox" /> Thu–Sat only</label>
+        <label class="check"><input id="rivals" type="checkbox" /> Competitors only</label>
+        <label class="check"><input id="tagged" type="checkbox" /> Tagged groups only</label>
+      </section>
+
+      <section class="sb-block">
+        <h4>Top groups · tap a dot to tag</h4>
+        <div id="groups" class="groups-list"></div>
+      </section>
+    </aside>
+
+    <main class="content">
+      <div class="board-frame">
+        <div class="board-head"><span class="dot"></span> DEPARTURES · LEEDS SOCIAL LINE</div>
+        <div id="ticker" class="ticker"><div class="ticker-track">Loading the board…</div></div>
       </div>
-      <div class="filters-row checks">
-        <label class="check"><input id="evening" type="checkbox" checked /> Mixer hours</label>
-        <label class="check"><input id="thuSat" type="checkbox" /> Thu–Sat</label>
-        <label class="check"><input id="rivals" type="checkbox" /> Competitors</label>
-        <label class="check"><input id="tagged" type="checkbox" /> Tagged only</label>
-      </div>
-    </details>
 
-    <section id="errors"></section>
-    <p id="legend" class="legend"></p>
+      <div id="watch" class="watch"></div>
+      <div id="errors"></div>
+      <p id="legend" class="legend"></p>
 
-    <details class="panel" open>
-      <summary>Top groups <span class="chev">▾</span></summary>
-      <div id="groups" class="groups-strip"></div>
-    </details>
-
-    <section id="board" class="grid"></section>
-    <section id="calendar" class="calendar hidden"></section>
-    <section id="radar" class="radar hidden"></section>
-    <section id="analytics" class="analytics hidden"></section>
-  </main>
+      <section id="board" class="board-list"></section>
+      <section id="calendar" class="calendar hidden"></section>
+      <section id="radar" class="radar hidden"></section>
+      <section id="analytics" class="analytics hidden"></section>
+    </main>
+  </div>
 
   <div id="shareModal" class="modal hidden">
     <div class="modal-card">
       <p class="tag">Share widget</p>
       <h3>Embed this radar anywhere</h3>
-      <p class="hint">Drop this on paradise-glitch.co.uk, Notion, or a partner site. It auto-refreshes and stays read-only.</p>
+      <p class="hint">Drop this on paradise-glitch.co.uk, Notion, or a partner site. Read-only, auto-refreshing.</p>
       <textarea id="embedCode" readonly rows="3"></textarea>
       <div class="modal-actions">
         <button id="copyEmbed" type="button">Copy embed code</button>
@@ -102,14 +101,11 @@
     </div>
   </div>
 
-  <template id="card">
-    <article>
-      <p class="tag"></p>
-      <h2></h2>
-      <p class="when"></p>
-      <p class="venue"></p>
-      <p class="desc"></p>
-      <a target="_blank" rel="noopener">Open listing ↗</a>
+  <template id="row">
+    <article class="event-row">
+      <div class="col-time"><span class="tag"></span><span class="when"></span></div>
+      <div class="col-main"><h2></h2><p class="venue"></p></div>
+      <a class="col-open" target="_blank" rel="noopener">Open ↗</a>
     </article>
   </template>
   <script src="/app.js"></script>
