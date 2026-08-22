@@ -112,7 +112,7 @@ async function refresh() {
   if (enabled.has('fatsoma')) jobs.push(['fatsoma', 'https://www.fatsoma.com/l/gb/leeds']);
   if (enabled.has('meetup')) jobs.push(['meetup', 'https://www.meetup.com/find/?location=gb--leeds&source=EVENTS']);
 
-  const results = await Promise.allSettled(jobs.map(([, url]) => source(...)));
+  const results = await Promise.allSettled(jobs.map(([name, url]) => source(name, url)));
   const errors = [];
   let events = [];
   results.forEach((result, i) => {
