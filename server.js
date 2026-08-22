@@ -32,6 +32,7 @@ app.get('/api/health', wrap(async (_req, res) => {
   const data = await getEvents({});
   send(res, 200, { ok: true, events: data.events.length, updatedAt: data.updatedAt, sources: data.sources, errors: data.errors, durationMs: data.durationMs });
 }));
+app.get('/widget', (_req, res) => res.sendFile(path.join(publicDir, 'widget.html')));
 app.get('/', (_req, res) => res.sendFile(path.join(publicDir, 'index.html')));
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api/')) return next();

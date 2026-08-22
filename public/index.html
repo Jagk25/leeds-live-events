@@ -9,36 +9,35 @@
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
-  <main>
-    <p class="kicker">// the signal</p>
-    <header>
-      <div>
-        <p class="eyebrow">PARADISE GLITCH · LEEDS</p>
-        <h1>Break the clash.</h1>
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <p class="eyebrow">PARADISE GLITCH</p>
         <p id="status">Reading the room…</p>
       </div>
+      <nav class="views">
+        <button type="button" data-view="board" class="active">Board</button>
+        <button type="button" data-view="calendar">Cal</button>
+        <button type="button" data-view="radar">Clash</button>
+        <button type="button" data-view="analytics">Stats</button>
+      </nav>
       <div class="actions">
-        <a class="ghost" href="https://www.paradise-glitch.co.uk" target="_blank" rel="noopener">Main site</a>
-        <button id="refresh" type="button">Refresh now</button>
+        <button id="shareBtn" type="button" class="ghost">Share widget</button>
+        <button id="refresh" type="button">Refresh</button>
       </div>
-    </header>
+    </div>
+  </div>
 
+  <main>
     <section class="board-frame">
       <div class="board-head"><span class="dot"></span> DEPARTURES · LEEDS SOCIAL LINE</div>
       <div id="ticker" class="ticker"><div class="ticker-track">Loading the board…</div></div>
     </section>
 
-    <nav class="views">
-      <button type="button" data-view="board" class="active">Board</button>
-      <button type="button" data-view="calendar">Calendar</button>
-      <button type="button" data-view="radar">Clash radar</button>
-      <button type="button" data-view="analytics">Analytics</button>
-    </nav>
-
     <section id="watch" class="watch"></section>
 
-    <section class="panel filters">
-      <p class="panel-title">02 // filter the room</p>
+    <details class="panel filters" open id="filtersPanel">
+      <summary>Filter the room <span class="chev">▾</span></summary>
       <div class="filters-row">
         <input id="q" placeholder="Search the room…" />
         <select id="source">
@@ -71,26 +70,38 @@
         <label class="check"><input id="evening" type="checkbox" checked /> Mixer hours</label>
         <label class="check"><input id="thuSat" type="checkbox" /> Thu–Sat</label>
         <label class="check"><input id="rivals" type="checkbox" /> Competitors</label>
-        <label class="check"><input id="tagged" type="checkbox" /> Tagged groups only</label>
+        <label class="check"><input id="tagged" type="checkbox" /> Tagged only</label>
       </div>
-    </section>
+    </details>
 
     <section id="errors"></section>
-    <section id="legend" class="legend"></section>
+    <p id="legend" class="legend"></p>
 
-    <section class="panel">
-      <p class="panel-title">03 // top groups — tap a dot to tag</p>
-      <section id="groups" class="groups"></section>
-    </section>
+    <details class="panel" open>
+      <summary>Top groups <span class="chev">▾</span></summary>
+      <div id="groups" class="groups-strip"></div>
+    </details>
 
-    <section class="panel">
-      <p class="panel-title">04 // the feed</p>
-      <section id="board" class="grid"></section>
-    </section>
+    <section id="board" class="grid"></section>
     <section id="calendar" class="calendar hidden"></section>
     <section id="radar" class="radar hidden"></section>
     <section id="analytics" class="analytics hidden"></section>
   </main>
+
+  <div id="shareModal" class="modal hidden">
+    <div class="modal-card">
+      <p class="tag">Share widget</p>
+      <h3>Embed this radar anywhere</h3>
+      <p class="hint">Drop this on paradise-glitch.co.uk, Notion, or a partner site. It auto-refreshes and stays read-only.</p>
+      <textarea id="embedCode" readonly rows="3"></textarea>
+      <div class="modal-actions">
+        <button id="copyEmbed" type="button">Copy embed code</button>
+        <a id="openWidget" class="ghost" target="_blank" rel="noopener">Preview widget ↗</a>
+        <button id="closeModal" type="button" class="ghost">Close</button>
+      </div>
+    </div>
+  </div>
+
   <template id="card">
     <article>
       <p class="tag"></p>
