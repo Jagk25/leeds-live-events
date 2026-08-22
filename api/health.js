@@ -1,6 +1,15 @@
-import { getState } from '../lib/events.js';
+import { getEvents } from '../lib/events.js';
+
+export const config = { maxDuration: 30 };
 
 export default async function handler(_req, res) {
-  const state = getState();
-  res.status(200).json({ ok: true, events: state.events.length, updatedAt: state.updatedAt, sources: state.sources, errors: state.errors });
+  const data = await getEvents({});
+  res.setHeader('Cache-Control', 'no-store');
+  res.status(200).json({
+    ok: true,
+    events: data.events.length,
+    updatedAt: data.updatedAt,
+    sources: data.sources,
+    errors: data.errors,
+  });
 }
