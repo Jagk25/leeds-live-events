@@ -3,28 +3,37 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Paradise Glitch Radar</title>
+  <title>The Signal // Paradise Glitch Radar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Syne:wght@600;700;800&display=swap" />
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
   <main>
+    <p class="kicker">// the signal</p>
     <header>
       <div>
-        <p class="eyebrow">PARADISE GLITCH RADAR</p>
-        <h1>Leeds Live Events</h1>
-        <p id="status">Loading public listings…</p>
+        <p class="eyebrow">PARADISE GLITCH · LEEDS</p>
+        <h1>Break the clash.</h1>
+        <p id="status">Reading the room…</p>
       </div>
-      <button id="refresh" type="button">Refresh now</button>
+      <div class="actions">
+        <a class="ghost" href="https://www.paradise-glitch.co.uk" target="_blank" rel="noopener">Main site</a>
+        <button id="refresh" type="button">Refresh now</button>
+      </div>
     </header>
 
-    <nav class="views" aria-label="Views">
+    <nav class="views">
       <button type="button" data-view="board" class="active">Board</button>
       <button type="button" data-view="calendar">Calendar</button>
       <button type="button" data-view="radar">Clash radar</button>
+      <button type="button" data-view="analytics">Analytics</button>
     </nav>
 
+    <section id="watch" class="watch"></section>
+
     <section class="filters">
-      <input id="q" placeholder="Search social, tech, sober, venue…" />
+      <input id="q" placeholder="Search the room…" />
       <select id="source">
         <option value="">All sources</option>
         <option value="meetup">Meetup</option>
@@ -50,9 +59,9 @@
         <option value="weekend">This weekend</option>
         <option value="september">September 2026</option>
       </select>
-      <label class="check"><input id="evening" type="checkbox" checked /> Mixer hours (6pm–late)</label>
-      <label class="check"><input id="thuSat" type="checkbox" /> Thu–Sat only</label>
-      <label class="check"><input id="rivals" type="checkbox" /> Competitors only</label>
+      <label class="check"><input id="evening" type="checkbox" checked /> Mixer hours</label>
+      <label class="check"><input id="thuSat" type="checkbox" /> Thu–Sat</label>
+      <label class="check"><input id="rivals" type="checkbox" /> Competitors</label>
     </section>
 
     <section id="errors"></section>
@@ -61,8 +70,8 @@
     <section id="board" class="grid"></section>
     <section id="calendar" class="calendar hidden"></section>
     <section id="radar" class="radar hidden"></section>
+    <section id="analytics" class="analytics hidden"></section>
   </main>
-
   <template id="card">
     <article>
       <p class="tag"></p>
@@ -70,7 +79,7 @@
       <p class="when"></p>
       <p class="venue"></p>
       <p class="desc"></p>
-      <a target="_blank" rel="noopener">View event ↗</a>
+      <a target="_blank" rel="noopener">Open listing ↗</a>
     </article>
   </template>
   <script src="/app.js"></script>

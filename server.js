@@ -1,7 +1,8 @@
 import express from 'express';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { getEvents, refresh, getState } from './lib/events.js';
+import { getEvents, refresh, getAnalytics } from './lib/events.js';
+import { fail, send } from './lib/core.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -10,50 +11,39 @@ const publicDir = path.join(__dirname, 'public');
 
 app.use(express.static(publicDir));
 
-app.get('/api/events', async (req, res) => {
-  const data = await getEvents(req.query);
-  res.set('Cache-Control', 'no-store');
-  res.json(data);
-});
+function wrap(fn) {
+  return async (req, res, next) => {
+    try { await fn(req, res); } catch (err) { next(err); }
+  };
+}
 
-app.post('/api/refresh', async (_req, res) => {
-  res.set('Cache-Control', 'no-store');
-  res.json(await refresh());
-});
-
-app.get('/api/cron', async (req, res) => {
+app.get('/api/events', wrap(async (req, res) => send(res, 200, await getEvents(req.query))));
+app.get('/api/analytics', wrap(async (_req, res) => send(res, 200, await getAnalytics())));
+app.post('/api/refresh', wrap(async (_req, res) => send(res, 200, await refresh())));
+app.get('/api/refresh', wrap(async (_req, res) => send(res, 200, await refresh())));
+app.get('/api/cron', wrap(async (req, res) => {
   if (process.env.CRON_SECRET && req.headers.authorization !== `Bearer ${process.env.CRON_SECRET}`) {
-    return res.status(401).json({ ok: false });
+    return send(res, 401, fail('AUTH', 'Invalid cron secret'));
   }
   const result = await refresh();
-  res.json({ ok: true, count: result.events.length, updatedAt: result.updatedAt, errors: result.errors });
-});
-
-app.get('/api/health', async (_req, res) => {
+  send(res, 200, { ok: true, count: result.events.length, updatedAt: result.updatedAt, errors: result.errors });
+}));
+app.get('/api/health', wrap(async (_req, res) => {
   const data = await getEvents({});
-  res.json({
-    ok: true,
-    events: data.events.length,
-    updatedAt: data.updatedAt,
-    sources: data.sources,
-    errors: data.errors,
-  });
-});
-
-app.get('/', (_req, res) => {
-  res.sendFile(path.join(publicDir, 'index.html'));
-});
-
+  send(res, 200, { ok: true, events: data.events.length, updatedAt: data.updatedAt, sources: data.sources, errors: data.errors, durationMs: data.durationMs });
+}));
+app.get('/', (_req, res) => res.sendFile(path.join(publicDir, 'index.html')));
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api/')) return next();
   res.sendFile(path.join(publicDir, 'index.html'));
 });
+app.use((err, _req, res, _next) => send(res, 500, fail('INTERNAL', err.message || 'Unexpected error')));
 
 export default app;
 
 if (!process.env.VERCEL) {
   app.listen(PORT, () => {
-    console.log(`Leeds Live Events → http://localhost:${PORT}`);
+    console.log(`Paradise Glitch Radar → http://localhost:${PORT}`);
     refresh().catch(console.error);
   });
 }

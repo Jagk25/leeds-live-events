@@ -1,9 +1,9 @@
 import { refresh } from '../lib/events.js';
+import { fail, send, withHandler } from '../lib/core.js';
 
 export const config = { maxDuration: 30 };
 
-export default async function handler(req, res) {
-  if (req.method !== 'POST' && req.method !== 'GET') return res.status(405).json({ ok: false });
-  res.setHeader('Cache-Control', 'no-store');
-  res.status(200).json(await refresh());
-}
+export default withHandler(async (req, res) => {
+  if (req.method !== 'POST' && req.method !== 'GET') return send(res, 405, fail('METHOD', 'Use GET or POST'));
+  send(res, 200, await refresh());
+});
