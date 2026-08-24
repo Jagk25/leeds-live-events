@@ -48,6 +48,18 @@
       </section>
 
       <section class="sb-block">
+        <h4>Board feed · pick sources</h4>
+        <div class="chip-row" id="boardFeed">
+          <button type="button" class="chip" data-feed="meetup">Meetup</button>
+          <button type="button" class="chip" data-feed="eventbrite">Eventbrite</button>
+          <button type="button" class="chip" data-feed="fatsoma">Fatsoma</button>
+          <button type="button" class="chip" data-feed="skiddle">Skiddle</button>
+          <button type="button" class="chip" data-feed="visit-leeds">Visit Leeds</button>
+          <button type="button" class="chip" data-feed="leeds-uni">Leeds Uni</button>
+        </div>
+      </section>
+
+      <section class="sb-block">
         <h4>Filter</h4>
         <input id="q" placeholder="Search the room…" />
         <div class="chip-row" id="quickChips">
@@ -105,9 +117,12 @@
 
     <main class="content">
       <div class="board-frame">
-        <div class="board-head"><span class="dot"></span> DEPARTURES · LEEDS SOCIAL LINE</div>
+        <div class="board-head">
+          <span class="dot"></span> DEPARTURES · LEEDS SOCIAL LINE
+          <span id="boardClock" class="board-clock"></span>
+        </div>
         <div class="flap-board">
-          <div class="flap-header"><span>TIME</span><span>EVENT</span><span>VENUE</span><span>STAT</span></div>
+          <div class="flap-header"><span>TIME</span><span>EVENT</span><span>VENUE</span><span>GATE</span><span>STAT</span></div>
           <div id="flapRows" class="flap-rows"></div>
           <div class="flap-controls">
             <button type="button" class="tk-nav tk-prev" aria-label="Previous page">‹</button>
