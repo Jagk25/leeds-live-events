@@ -1,5 +1,54 @@
 const $ = (s) => document.querySelector(s);
+const esc = (value = '') => { const div = document.createElement('div'); div.textContent = value; return div.innerHTML; };
+const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+// --- Theme engine ---
+const THEME_KEY = 'pg_theme';
+const CUSTOM_KEY = 'pg_custom_colors';
+function loadJson(key, fallback) { try { return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); } catch { return fallback; } }
+function saveJson(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch {} }
+function applyCustomColors(map) {
+  if (map.accent) document.documentElement.style.setProperty('--pink', map.accent);
+  if (map.highlight) document.documentElement.style.setProperty('--gold', map.highlight);
+  if (map.bg) document.documentElement.style.setProperty('--bg', map.bg);
+}
+function setTheme(name) {
+  document.documentElement.setAttribute('data-theme', name === 'signal' ? '' : name);
+  saveJson(THEME_KEY, name);
+  document.querySelectorAll('.theme-swatch').forEach((b) => b.classList.toggle('active', b.dataset.theme === name));
+}
+try {
+  const savedTheme = loadJson(THEME_KEY, 'signal');
+  setTheme(savedTheme);
+  const custom = loadJson(CUSTOM_KEY, {});
+  applyCustomColors(custom);
+  if (custom.accent) $('#colorAccent')?.setAttribute('value', custom.accent);
+  if (custom.highlight) $('#colorHighlight')?.setAttribute('value', custom.highlight);
+  if (custom.bg) $('#colorBg')?.setAttribute('value', custom.bg);
+  document.querySelectorAll('.theme-swatch').forEach((btn) => { btn.onclick = () => setTheme(btn.dataset.theme); });
+  function bindColor(id, key) {
+    const input = $(id);
+    if (!input) return;
+    input.oninput = () => {
+      const map = loadJson(CUSTOM_KEY, {});
+      map[key] = input.value;
+      saveJson(CUSTOM_KEY, map);
+      applyCustomColors(map);
+    };
+  }
+  bindColor('#colorAccent', 'accent');
+  bindColor('#colorHighlight', 'highlight');
+  bindColor('#colorBg', 'bg');
+  $('#resetTheme')?.addEventListener('click', () => {
+    saveJson(CUSTOM_KEY, {});
+    document.documentElement.style.removeProperty('--pink');
+    document.documentElement.style.removeProperty('--gold');
+    document.documentElement.style.removeProperty('--bg');
+    setTheme('signal');
+  });
+} catch (e) { console.error('Theme init failed', e); }
+
+// --- Share widget + sidebar drawer (wired early, defensively) ---
 try {
   const shareBtn = $('#shareBtn');
   const shareModal = $('#shareModal');
@@ -8,7 +57,6 @@ try {
   const closeModal = $('#closeModal');
   const copyEmbed = $('#copyEmbed');
   const widgetUrl = `${location.origin}/widget.html`;
-
   if (shareBtn && shareModal) {
     shareBtn.onclick = () => {
       if (embedCode) embedCode.value = `<iframe src="${widgetUrl}" width="320" height="420" style="border:0;border-radius:14px;overflow:hidden" loading="lazy"></iframe>`;
@@ -27,7 +75,6 @@ try {
       setTimeout(() => { copyEmbed.textContent = original; }, 1600);
     };
   }
-
   const sidebar = $('#sidebar');
   const scrim = $('#sidebarScrim');
   const toggle = $('#sidebarToggle');
@@ -39,6 +86,7 @@ try {
 
 const fmt = new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 const timeFmt = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit' });
+const dateShortFmt = new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 const dayFmt = new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
 const RIVALS = /chilled out|getsocial|leeds living|leeds nerds|so.?social|weroad|language exchange|mixer|speed dating|young professional|20s-40s|25-45/i;
 const CATS = {
@@ -54,6 +102,7 @@ const PALETTE = ['#ff3d7f', '#f0c36a', '#5ad1a6', '#5ab0ff', '#c792ea', '#ff8a5c
 const GROUP_COLOR_KEY = 'pg_group_colors';
 const CARD_COLOR_KEY = 'pg_card_colors';
 const PINNED_KEY = 'pg_pinned_groups';
+const VIEWS_KEY = 'pg_saved_views';
 const PIN_COLOR = '#f0c36a';
 
 let all = [];
@@ -61,17 +110,11 @@ let analytics = null;
 let view = 'board';
 let month = new Date(2026, 8, 1);
 let timer;
-
-function esc(value = '') {
-  const div = document.createElement('div');
-  div.textContent = value;
-  return div.innerHTML;
-}
-function loadJson(key, fallback) { try { return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); } catch { return fallback; } }
-function saveJson(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch {} }
+let quickFilter = null;
 let groupColors = loadJson(GROUP_COLOR_KEY, {});
 let cardColors = loadJson(CARD_COLOR_KEY, {});
 let pinnedGroups = new Set(loadJson(PINNED_KEY, []));
+let savedViews = loadJson(VIEWS_KEY, []);
 
 function setGroupColor(slug, color) { if (color) groupColors[slug] = color; else delete groupColors[slug]; saveJson(GROUP_COLOR_KEY, groupColors); paint(); }
 function cycleCardColor(id) {
@@ -118,13 +161,15 @@ function enrich(event) {
     pinned: slug ? pinnedGroups.has(slug) : false,
   };
 }
-
 function cardBorderColor(event) {
   if (event.cardColor) return event.cardColor;
   if (event.pinned) return PIN_COLOR;
   if (event.groupColor) return event.groupColor;
   return null;
 }
+
+function sameDay(a, b) { return a && b && a.toDateString() === b.toDateString(); }
+function isWeekendDow(d) { return d === 5 || d === 6 || d === 0; }
 
 function selected() {
   const q = $('#q').value.toLowerCase();
@@ -136,8 +181,9 @@ function selected() {
   const rivals = $('#rivals').checked;
   const taggedOnly = $('#tagged').checked;
   const now = new Date();
+  const tomorrow = new Date(now); tomorrow.setDate(now.getDate() + 1);
   const weekEnd = new Date(now); weekEnd.setDate(now.getDate() + 7);
-  return all.filter((event) => {
+  let list = all.filter((event) => {
     const hay = `${event.title} ${event.venue} ${event.description}`.toLowerCase();
     if (q && !hay.includes(q)) return false;
     if (source && event.source !== source) return false;
@@ -147,10 +193,18 @@ function selected() {
     if (rivals && !event.rival) return false;
     if (taggedOnly && !event.groupColor && !event.cardColor) return false;
     if (when === 'week' && event.start && (event.start < now || event.start > weekEnd)) return false;
-    if (when === 'weekend' && event.dow !== 5 && event.dow !== 6 && event.dow !== 0) return false;
+    if (when === 'weekend' && !isWeekendDow(event.dow)) return false;
     if (when === 'september' && (!event.start || event.start.getMonth() !== 8 || event.start.getFullYear() !== 2026)) return false;
+    if (quickFilter === 'tonight' && !(sameDay(event.start, now) && event.evening)) return false;
+    if (quickFilter === 'tomorrow' && !sameDay(event.start, tomorrow)) return false;
+    if (quickFilter === 'weekend' && !isWeekendDow(event.dow)) return false;
+    if (quickFilter === 'free' && event.price !== 0) return false;
     return true;
   });
+  const sortOrder = $('#sortOrder')?.value || 'relevance';
+  if (sortOrder === 'az') list = [...list].sort((a, b) => a.title.localeCompare(b.title));
+  else if (sortOrder === 'soonest') list = [...list].sort((a, b) => (a.start?.getTime() || 9e15) - (b.start?.getTime() || 9e15));
+  return list;
 }
 
 function topGroups(events) {
@@ -170,53 +224,70 @@ function topGroups(events) {
   }).slice(0, 8);
 }
 
-// --- Ticker: true split-flap, one item at a time ---
-let tickerItems = [];
-let tickerIndex = 0;
-let tickerTimer = null;
-let tickerPaused = false;
-const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+// --- Departure board: real multi-row split-flap with per-character diff flip ---
+const FLAP_ROWS = 8;
+const COLW = { time: 11, event: 30, venue: 15, status: 6 };
+let flapPage = 0;
+let flapPrev = null;
+let flapTimer = null;
 
-function paintTickerItem() {
-  const stage = document.querySelector('#ticker .tk-stage');
-  if (!stage || !tickerItems.length) return;
-  const e = tickerItems[tickerIndex];
-  const el = document.createElement('div');
-  el.className = 'tk-item flip-in';
-  el.innerHTML = `<span class="flight-no">${String(tickerIndex + 1).padStart(2, '0')}/${String(tickerItems.length).padStart(2, '0')}</span>${esc(timeFmt.format(e.start))} — ${esc(e.title.toUpperCase())} · ${esc((e.venue || e.source).toUpperCase())}`;
-  stage.innerHTML = '';
-  stage.append(el);
-  requestAnimationFrame(() => el.classList.remove('flip-in'));
+function padCell(str, len) { return (str || '').toString().toUpperCase().slice(0, len).padEnd(len, ' '); }
+function statusFor(e) {
+  if (e.getsocial) return 'RIVAL';
+  if (e.pinned) return 'PIN';
+  if (!e.start) return 'TBA';
+  const diffH = (e.start.getTime() - Date.now()) / 3_600_000;
+  if (diffH < 0) return 'LIVE';
+  if (diffH < 3) return 'SOON';
+  if (diffH < 24) return 'TODAY';
+  return 'OPEN';
 }
-function advanceTicker(dir) {
-  if (!tickerItems.length) return;
-  tickerIndex = (tickerIndex + dir + tickerItems.length) % tickerItems.length;
-  paintTickerItem();
-}
-function renderTicker(events) {
-  tickerItems = [...events].filter((e) => e.start).sort((a, b) => a.start - b.start).slice(0, 20);
-  const stage = document.querySelector('#ticker .tk-stage');
-  if (!stage) return;
-  clearInterval(tickerTimer);
-  if (!tickerItems.length) { stage.classList.remove('static'); stage.innerHTML = '<div class="tk-item">NO SCHEDULED DEPARTURES IN THIS FILTER</div>'; return; }
-  if (reduceMotion) {
-    stage.classList.add('static');
-    stage.innerHTML = tickerItems.slice(0, 8).map((e) => `<div class="tk-row">${esc(timeFmt.format(e.start))} — ${esc(e.title)} · ${esc(e.venue || e.source)}</div>`).join('');
+function renderFlapBoard(events) {
+  const container = $('#flapRows');
+  const pageEl = $('#flapPage');
+  if (!container) return;
+  const dated = [...events].filter((e) => e.start).sort((a, b) => a.start - b.start);
+  const totalPages = Math.max(1, Math.ceil(dated.length / FLAP_ROWS));
+  flapPage = Math.min(flapPage, totalPages - 1);
+  const pageEvents = dated.slice(flapPage * FLAP_ROWS, flapPage * FLAP_ROWS + FLAP_ROWS);
+  if (!pageEvents.length) {
+    container.innerHTML = '<div class="flap-empty">NO SCHEDULED DEPARTURES IN THIS FILTER</div>';
+    flapPrev = null;
+    if (pageEl) pageEl.textContent = '0/0';
+    clearInterval(flapTimer);
     return;
   }
-  stage.classList.remove('static');
-  tickerIndex = Math.min(tickerIndex, tickerItems.length - 1);
-  paintTickerItem();
-  tickerTimer = setInterval(() => { if (!tickerPaused) advanceTicker(1); }, 3500);
+  const rows = pageEvents.map((e) => ({
+    time: padCell(dateShortFmt.format(e.start), COLW.time),
+    event: padCell(e.title, COLW.event),
+    venue: padCell(e.venue || e.source, COLW.venue),
+    status: padCell(statusFor(e), COLW.status),
+    url: e.url,
+  }));
+  container.innerHTML = rows.map((r, ri) => {
+    const prevRow = flapPrev && flapPrev[ri];
+    const fieldsHtml = ['time', 'event', 'venue', 'status'].map((f) => {
+      const str = r[f];
+      const prevStr = prevRow ? prevRow[f] : null;
+      const cells = [...str].map((ch, ci) => {
+        const changed = prevStr ? prevStr[ci] !== ch : false;
+        const display = ch === ' ' ? '&nbsp;' : esc(ch);
+        return `<span class="flap-cell${changed && !reduceMotion ? ' flip' : ''}" style="animation-delay:${ci * 14}ms">${display}</span>`;
+      }).join('');
+      return `<div class="flap-field flap-${f}">${cells}</div>`;
+    }).join('');
+    return `<a class="flap-row" href="${esc(r.url)}" target="_blank" rel="noopener">${fieldsHtml}</a>`;
+  }).join('');
+  flapPrev = rows;
+  if (pageEl) pageEl.textContent = `${flapPage + 1}/${totalPages}`;
+  clearInterval(flapTimer);
+  if (!reduceMotion && totalPages > 1) {
+    flapTimer = setInterval(() => { flapPage = (flapPage + 1) % totalPages; paint(); }, 7000);
+  }
 }
 try {
-  const tk = $('#ticker');
-  if (tk) {
-    tk.addEventListener('mouseenter', () => { tickerPaused = true; });
-    tk.addEventListener('mouseleave', () => { tickerPaused = false; });
-    tk.querySelector('.tk-prev')?.addEventListener('click', () => advanceTicker(-1));
-    tk.querySelector('.tk-next')?.addEventListener('click', () => advanceTicker(1));
-  }
+  $('.flap-controls .tk-prev')?.addEventListener('click', () => { flapPage = Math.max(0, flapPage - 1); paint(); });
+  $('.flap-controls .tk-next')?.addEventListener('click', () => { flapPage += 1; paint(); });
 } catch {}
 
 function renderWatch(events) {
@@ -247,12 +318,9 @@ function renderGroups(events) {
   $('#groups').querySelectorAll('.swatch').forEach((btn) => {
     btn.onclick = (ev) => { ev.stopPropagation(); setGroupColor(btn.closest('.swatches').dataset.slug, btn.dataset.color || null); };
   });
-  $('#groups').querySelectorAll('.pin-btn').forEach((btn) => {
-    btn.onclick = () => togglePin(btn.dataset.slug);
-  });
+  $('#groups').querySelectorAll('.pin-btn').forEach((btn) => { btn.onclick = () => togglePin(btn.dataset.slug); });
 }
 
-// --- Recurrence grouping: collapse same source+title+venue series ---
 function seriesKey(e) { return `${e.source}::${normTitle(e.title)}::${(e.venue || '').toLowerCase()}`; }
 function groupSeries(events) {
   const map = new Map();
@@ -264,14 +332,8 @@ function groupSeries(events) {
   return [...map.values()].map((list) => {
     list.sort((a, b) => (a.start?.getTime() || 0) - (b.start?.getTime() || 0));
     return { primary: list[0], more: list.slice(1) };
-  }).sort((a, b) => {
-    const rk = (e) => (e.getsocial ? 0 : e.source === 'meetup' ? 1 : 2);
-    const r = rk(a.primary) - rk(b.primary);
-    if (r) return r;
-    return (a.primary.start?.getTime() || 9e15) - (b.primary.start?.getTime() || 9e15);
   });
 }
-
 function renderBoard(events) {
   const root = $('#board'); root.innerHTML = '';
   for (const { primary: event, more } of groupSeries(events).slice(0, 200)) {
@@ -361,10 +423,61 @@ function renderAnalytics() {
   <p class="tag" style="margin-top:14px;display:block">GetSocial next</p>
   <p>${a.getsocial?.next ? esc(a.getsocial.next.title) + ' · ' + (a.getsocial.next.startAt ? fmt.format(new Date(a.getsocial.next.startAt)) : '') : 'No dated GetSocial event in the current scrape.'}</p>`;
 }
+
+// --- Quick filter chips + saved views ---
+function renderQuickChips() {
+  document.querySelectorAll('#quickChips .chip').forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.quick === quickFilter);
+    btn.onclick = () => { quickFilter = quickFilter === btn.dataset.quick ? null : btn.dataset.quick; paint(); };
+  });
+}
+function currentFilterSnapshot() {
+  return {
+    q: $('#q').value, source: $('#source').value, category: $('#category').value, when: $('#when').value,
+    sortOrder: $('#sortOrder').value, evening: $('#evening').checked, thuSat: $('#thuSat').checked,
+    rivals: $('#rivals').checked, tagged: $('#tagged').checked, quickFilter,
+  };
+}
+function applyFilterSnapshot(snap) {
+  $('#q').value = snap.q || ''; $('#source').value = snap.source || ''; $('#category').value = snap.category || '';
+  $('#when').value = snap.when || ''; $('#sortOrder').value = snap.sortOrder || 'relevance';
+  $('#evening').checked = !!snap.evening; $('#thuSat').checked = !!snap.thuSat;
+  $('#rivals').checked = !!snap.rivals; $('#tagged').checked = !!snap.tagged;
+  quickFilter = snap.quickFilter || null;
+  load();
+}
+function renderPresetChips() {
+  const wrap = $('#presetChips');
+  if (!wrap) return;
+  wrap.innerHTML = savedViews.map((v, i) => `<span class="chip preset-chip" data-idx="${i}">${esc(v.name)} <span class="del" data-del="${i}">×</span></span>`).join('');
+  wrap.querySelectorAll('.preset-chip').forEach((chip) => {
+    chip.addEventListener('click', (e) => {
+      if (e.target.dataset.del !== undefined) {
+        savedViews.splice(Number(e.target.dataset.del), 1);
+        saveJson(VIEWS_KEY, savedViews);
+        renderPresetChips();
+        return;
+      }
+      applyFilterSnapshot(savedViews[Number(chip.dataset.idx)].filters);
+    });
+  });
+}
+try {
+  $('#savePreset')?.addEventListener('click', () => {
+    const name = $('#presetName')?.value.trim();
+    if (!name) return;
+    savedViews.push({ name, filters: currentFilterSnapshot() });
+    saveJson(VIEWS_KEY, savedViews);
+    $('#presetName').value = '';
+    renderPresetChips();
+  });
+} catch {}
+
 function paint() {
+  renderQuickChips();
   const events = selected();
   $('#legend').textContent = `${events.length} matching · ★ pinned promotes to top · dot cycles a custom card color · gold border = pinned/clash risk`;
-  renderTicker(events);
+  renderFlapBoard(events);
   renderWatch(events);
   renderGroups(events);
   $('#board').classList.toggle('hidden', view !== 'board');
@@ -403,8 +516,8 @@ document.querySelectorAll('.views button').forEach((btn) => {
     paint();
   };
 });
-['q','source','category','when','evening','thuSat','rivals','tagged'].forEach((id) => {
-  $('#' + id).addEventListener(id === 'q' ? 'input' : 'change', () => {
+['q','source','category','when','sortOrder','evening','thuSat','rivals','tagged'].forEach((id) => {
+  $('#' + id)?.addEventListener(id === 'q' ? 'input' : 'change', () => {
     clearTimeout(timer);
     timer = setTimeout(id === 'q' ? load : paint, id === 'q' ? 250 : 0);
   });
@@ -415,5 +528,6 @@ $('#refresh').onclick = async () => {
   button.disabled = false; button.textContent = original; load();
 };
 
+renderPresetChips();
 load();
 setInterval(load, 120000);
