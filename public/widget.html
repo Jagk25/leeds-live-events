@@ -1,35 +1,241 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Paradise Glitch · Widget</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Syne:wght@700;800&display=swap" />
-  <style>
-    * { box-sizing: border-box; }
-    body { margin: 0; background: #07070a; color: #f4efe8; font-family: Syne, sans-serif; }
-    .wrap { padding: 12px 14px; }
-    .head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-    .head strong { font-size: 0.85rem; letter-spacing: 0.08em; text-transform: uppercase; color: #ff3d7f; }
-    .head a { color: #b7aea4; font-size: 0.72rem; text-decoration: none; }
-    ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
-    li { border: 1px solid #2a2428; border-left: 3px solid #ff3d7f; border-radius: 10px; padding: 8px 10px; background: #110e12; }
-    li a { color: #f4efe8; text-decoration: none; display: block; }
-    .time { font-family: "Share Tech Mono", monospace; color: #f0c36a; font-size: 0.78rem; }
-    .title { font-weight: 700; font-size: 0.92rem; margin: 2px 0; }
-    .meta { color: #b7aea4; font-size: 0.72rem; }
-    .empty { color: #b7aea4; font-size: 0.85rem; padding: 12px 0; }
-    .foot { text-align: center; margin-top: 10px; }
-    .foot a { color: #ff3d7f; font-size: 0.7rem; text-decoration: none; letter-spacing: 0.06em; }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Leeds Social Line · Live Board</title>
+<style>
+  :root {
+    --flap-bg: #141417; --flap-text: #f0ede6; --flap-accent: #e5a93c;
+    --board-frame: #0d0e11; --bezel-border: #23252b;
+    --flap-width: 22px; --flap-height: 34px;
+    --font-family: "Courier New", Courier, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: #0b0c0e; color: #d1d5db; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 18px 10px;
+  }
+  header { text-align: center; margin-bottom: 14px; }
+  header h1 { color: #fff; font-size: 1.05rem; letter-spacing: 0.14em; text-transform: uppercase; }
+  header .subtitle { font-size: 0.68rem; color: #888e9b; margin-top: 4px; letter-spacing: 0.08em; }
+  .solari-housing {
+    background: var(--board-frame); padding: 16px; border-radius: 12px;
+    box-shadow: inset 0 2px 4px rgba(255,255,255,0.05), 0 20px 40px rgba(0,0,0,0.7), 0 0 0 1px #000;
+    border: 2px solid var(--bezel-border); max-width: 100%; overflow-x: auto;
+  }
+  .solari-board { display: flex; flex-direction: column; gap: 3px; user-select: none; }
+  .solari-row { display: flex; gap: 2px; }
+  .split-flap-cell {
+    position: relative; width: var(--flap-width); height: var(--flap-height);
+    background: var(--flap-bg); border-radius: 3px; perspective: 260px; box-shadow: 0 3px 5px rgba(0,0,0,0.5);
+    flex-shrink: 0;
+  }
+  .split-flap-cell::before {
+    content: ""; position: absolute; top: 50%; left: 0; width: 100%; height: 1px; background: #000;
+    z-index: 20; transform: translateY(-50%);
+  }
+  .split-flap-cell::after {
+    content: ""; position: absolute; top: 50%; left: -1px; right: -1px; height: 3px; background: transparent;
+    border-left: 2px solid #3a3d45; border-right: 2px solid #3a3d45; z-index: 21; transform: translateY(-50%);
+  }
+  .half {
+    position: absolute; left: 0; width: 100%; height: 50%; overflow: hidden;
+    background-color: var(--flap-bg); color: var(--flap-text); font-family: var(--font-family);
+    font-size: calc(var(--flap-height) * 0.62); font-weight: 700; text-align: center;
+    line-height: var(--flap-height); backface-visibility: hidden;
+  }
+  .half.top { top: 0; border-radius: 3px 3px 0 0; background: linear-gradient(180deg, #1c1d22 0%, #121316 100%); transform-origin: bottom center; }
+  .half.bottom { bottom: 0; border-radius: 0 0 3px 3px; background: linear-gradient(180deg, #0e0f11 0%, #18191e 100%); line-height: 0; transform-origin: top center; }
+  .flap-anim-top { z-index: 2; transform-origin: bottom; }
+  .flap-anim-bottom { z-index: 3; transform-origin: top; }
+  .flap-static-top, .flap-static-bottom { z-index: 1; }
+  .board-caption { margin-top: 10px; font-size: 0.62rem; color: #666c78; letter-spacing: 0.1em; text-transform: uppercase; }
+  .board-caption strong { color: var(--flap-accent); }
+  @media (max-width: 760px) {
+    :root { --flap-width: 13px; --flap-height: 20px; }
+  }
+</style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="head"><strong>Paradise Glitch · Leeds</strong><a href="/" target="_top">Full radar ↗</a></div>
-    <ul id="list"><li class="empty">Loading…</li></ul>
-    <div class="foot"><a href="https://www.paradise-glitch.co.uk" target="_top">paradise-glitch.co.uk</a></div>
-  </div>
-  <script src="/widget.js"></script>
+<header>
+  <h1>Leeds Social Line</h1>
+  <div class="subtitle">Live departures · auto-refreshing</div>
+</header>
+<div class="solari-housing">
+  <div id="board" class="solari-board"></div>
+</div>
+<div class="board-caption" id="caption">Loading live feed…</div>
+
+<script>
+class SolariAudioEngine {
+  constructor() { this.ctx = null; this.enabled = false; }
+  initContext() {
+    if (this.ctx) return;
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (AudioContext) this.ctx = new AudioContext();
+  }
+  playClick() {
+    if (!this.enabled) return;
+    this.initContext();
+    if (!this.ctx || this.ctx.state !== 'running') return;
+    const now = this.ctx.currentTime;
+    const bufferSize = this.ctx.sampleRate * 0.015;
+    const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+    const output = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
+    const whiteNoise = this.ctx.createBufferSource();
+    whiteNoise.buffer = noiseBuffer;
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.value = 1400 + Math.random() * 400;
+    filter.Q.value = 3.0;
+    const gainNode = this.ctx.createGain();
+    gainNode.gain.setValueAtTime(0.06, now);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.015);
+    whiteNoise.connect(filter); filter.connect(gainNode); gainNode.connect(this.ctx.destination);
+    whiteNoise.start(now);
+  }
+}
+
+class SplitFlapCell {
+  constructor(characterSet, audioEngine) {
+    this.charset = characterSet;
+    this.audio = audioEngine;
+    this.currentIndex = 0;
+    this.targetIndex = 0;
+    this.isFlipping = false;
+    this.flipDuration = 34;
+    this.el = document.createElement('div');
+    this.el.className = 'split-flap-cell';
+    this.el.innerHTML = '<div class="half top flap-static-top"></div><div class="half bottom flap-static-bottom"></div><div class="half top flap-anim-top"></div><div class="half bottom flap-anim-bottom"></div>';
+    this.staticTop = this.el.querySelector('.flap-static-top');
+    this.staticBottom = this.el.querySelector('.flap-static-bottom');
+    this.animTop = this.el.querySelector('.flap-anim-top');
+    this.animBottom = this.el.querySelector('.flap-anim-bottom');
+    this.renderInstant(this.charset[0]);
+  }
+  renderInstant(char) {
+    this.staticTop.textContent = char; this.staticBottom.textContent = char;
+    this.animTop.style.display = 'none'; this.animBottom.style.display = 'none';
+  }
+  setTarget(char) {
+    const uppercaseChar = char.toUpperCase();
+    const found = this.charset.indexOf(uppercaseChar);
+    this.targetIndex = found !== -1 ? found : this.charset.indexOf(' ');
+    if (!this.isFlipping && this.currentIndex !== this.targetIndex) this.advanceStep();
+  }
+  advanceStep() {
+    if (this.currentIndex === this.targetIndex) { this.isFlipping = false; return; }
+    this.isFlipping = true;
+    const prevChar = this.charset[this.currentIndex];
+    this.currentIndex = (this.currentIndex + 1) % this.charset.length;
+    const nextChar = this.charset[this.currentIndex];
+    this.staticTop.textContent = nextChar; this.staticBottom.textContent = prevChar;
+    this.animTop.textContent = prevChar; this.animBottom.textContent = nextChar;
+    this.animTop.style.display = 'block'; this.animBottom.style.display = 'none';
+    this.animTop.style.transform = 'rotateX(0deg)';
+    const halfTime = this.flipDuration / 2;
+    const topAnim = this.animTop.animate(
+      [{ transform: 'rotateX(0deg)', filter: 'brightness(1)' }, { transform: 'rotateX(-90deg)', filter: 'brightness(0.6)' }],
+      { duration: halfTime, fill: 'forwards', easing: 'ease-in' }
+    );
+    topAnim.onfinish = () => {
+      this.animTop.style.display = 'none';
+      this.animBottom.style.display = 'block';
+      this.animBottom.style.transform = 'rotateX(90deg)';
+      const bottomAnim = this.animBottom.animate(
+        [{ transform: 'rotateX(90deg)', filter: 'brightness(0.6)' }, { transform: 'rotateX(0deg)', filter: 'brightness(1)' }],
+        { duration: halfTime, fill: 'forwards', easing: 'ease-out' }
+      );
+      bottomAnim.onfinish = () => {
+        this.staticBottom.textContent = nextChar;
+        this.animBottom.style.display = 'none';
+        this.audio.playClick();
+        if (this.currentIndex !== this.targetIndex) this.advanceStep(); else this.isFlipping = false;
+      };
+    };
+  }
+}
+
+class SplitFlapBoard {
+  constructor(containerEl, rows, cols) {
+    this.container = containerEl; this.rows = rows; this.cols = cols;
+    this.charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,:-!?/&' ".split('');
+    this.audio = new SolariAudioEngine();
+    this.grid = [];
+    this.initDOM();
+  }
+  initDOM() {
+    this.container.innerHTML = '';
+    this.grid = [];
+    for (let r = 0; r < this.rows; r++) {
+      const rowDiv = document.createElement('div');
+      rowDiv.className = 'solari-row';
+      const rowCells = [];
+      for (let c = 0; c < this.cols; c++) {
+        const cell = new SplitFlapCell(this.charset, this.audio);
+        rowDiv.appendChild(cell.el);
+        rowCells.push(cell);
+      }
+      this.container.appendChild(rowDiv);
+      this.grid.push(rowCells);
+    }
+  }
+  setText(lines, staggerMs = 22) {
+    for (let r = 0; r < this.rows; r++) {
+      const lineStr = (lines[r] || '').padEnd(this.cols, ' ').substring(0, this.cols);
+      for (let c = 0; c < this.cols; c++) {
+        const char = lineStr[c];
+        setTimeout(() => { this.grid[r][c].setTarget(char); }, c * staggerMs + r * 55);
+      }
+    }
+  }
+}
+
+const ROWS = 10, COLS = 42, PAGE_MS = 6500, REFRESH_MS = 45000;
+const boardEl = document.getElementById('board');
+const captionEl = document.getElementById('caption');
+const board = new SplitFlapBoard(boardEl, ROWS, COLS);
+let events = [];
+let page = 0;
+
+function fmtTime(d) {
+  return d.toLocaleString('en-GB', { weekday: 'short', hour: '2-digit', minute: '2-digit' }).toUpperCase().replace(',', '');
+}
+function lineFor(e) {
+  const when = e.start ? fmtTime(e.start) : 'TBA';
+  const title = (e.title || '').toUpperCase();
+  const venue = (e.venue || '').toUpperCase();
+  return `${when.padEnd(11)}${title}${venue ? ' - ' + venue : ''}`;
+}
+function paintPage() {
+  const totalPages = Math.max(1, Math.ceil(events.length / ROWS));
+  page = page % totalPages;
+  const slice = events.slice(page * ROWS, page * ROWS + ROWS);
+  const lines = slice.length ? slice.map(lineFor) : ['NO LIVE EVENTS IN THE FEED RIGHT NOW'];
+  board.setText(lines);
+  captionEl.innerHTML = `<strong>${events.length}</strong> upcoming · page ${page + 1}/${totalPages} · leeds social line`;
+  page += 1;
+}
+async function loadEvents() {
+  try {
+    const res = await fetch('/api/events');
+    const data = await res.json();
+    events = (data.events || [])
+      .map((e) => ({ ...e, start: e.startAt ? new Date(e.startAt) : null }))
+      .filter((e) => e.start && e.start > new Date())
+      .sort((a, b) => a.start - b.start)
+      .slice(0, 80);
+    page = 0;
+    paintPage();
+  } catch (err) {
+    captionEl.textContent = 'Feed unreachable — retrying…';
+  }
+}
+loadEvents();
+setInterval(paintPage, PAGE_MS);
+setInterval(loadEvents, REFRESH_MS);
+</script>
 </body>
 </html>
