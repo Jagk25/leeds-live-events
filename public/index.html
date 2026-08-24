@@ -31,8 +31,31 @@
     <div id="sidebarScrim" class="scrim hidden"></div>
     <aside id="sidebar" class="sidebar">
       <section class="sb-block">
+        <h4>Theme</h4>
+        <div class="theme-presets" id="themePresets">
+          <button type="button" class="theme-swatch" data-theme="signal" style="background:#ff3d7f" title="Signal (pink)"></button>
+          <button type="button" class="theme-swatch" data-theme="amber" style="background:#ffb000" title="Amber board"></button>
+          <button type="button" class="theme-swatch" data-theme="terminal" style="background:#39ff88" title="Terminal green"></button>
+          <button type="button" class="theme-swatch" data-theme="midnight" style="background:#5ab0ff" title="Midnight blue"></button>
+          <button type="button" class="theme-swatch" data-theme="sunset" style="background:#ff6a3d" title="Sunset"></button>
+        </div>
+        <div class="color-row">
+          <label>Accent <input type="color" id="colorAccent" value="#ff3d7f" /></label>
+          <label>Highlight <input type="color" id="colorHighlight" value="#f0c36a" /></label>
+          <label>Backdrop <input type="color" id="colorBg" value="#0a090c" /></label>
+        </div>
+        <button type="button" id="resetTheme" class="ghost small">Reset to default</button>
+      </section>
+
+      <section class="sb-block">
         <h4>Filter</h4>
         <input id="q" placeholder="Search the room…" />
+        <div class="chip-row" id="quickChips">
+          <button type="button" class="chip" data-quick="tonight">Tonight</button>
+          <button type="button" class="chip" data-quick="tomorrow">Tomorrow</button>
+          <button type="button" class="chip" data-quick="weekend">This weekend</button>
+          <button type="button" class="chip" data-quick="free">Free (£0)</button>
+        </div>
         <select id="source">
           <option value="">All sources</option>
           <option value="meetup">Meetup</option>
@@ -58,10 +81,20 @@
           <option value="weekend">This weekend</option>
           <option value="september">September 2026</option>
         </select>
+        <select id="sortOrder">
+          <option value="relevance">Sort: Relevance</option>
+          <option value="soonest">Sort: Soonest</option>
+          <option value="az">Sort: A–Z</option>
+        </select>
         <label class="check"><input id="evening" type="checkbox" checked /> Mixer hours (5pm+)</label>
         <label class="check"><input id="thuSat" type="checkbox" /> Thu–Sat only</label>
         <label class="check"><input id="rivals" type="checkbox" /> Competitors only</label>
         <label class="check"><input id="tagged" type="checkbox" /> Tagged groups only</label>
+        <div class="preset-row">
+          <input id="presetName" placeholder="Name this view…" />
+          <button type="button" id="savePreset">Save</button>
+        </div>
+        <div class="chip-row" id="presetChips"></div>
       </section>
 
       <section class="sb-block">
@@ -73,10 +106,14 @@
     <main class="content">
       <div class="board-frame">
         <div class="board-head"><span class="dot"></span> DEPARTURES · LEEDS SOCIAL LINE</div>
-        <div id="ticker" class="ticker">
-          <button type="button" class="tk-nav tk-prev" aria-label="Previous departure">‹</button>
-          <div class="tk-stage"><div class="tk-item">Loading the board…</div></div>
-          <button type="button" class="tk-nav tk-next" aria-label="Next departure">›</button>
+        <div class="flap-board">
+          <div class="flap-header"><span>TIME</span><span>EVENT</span><span>VENUE</span><span>STAT</span></div>
+          <div id="flapRows" class="flap-rows"></div>
+          <div class="flap-controls">
+            <button type="button" class="tk-nav tk-prev" aria-label="Previous page">‹</button>
+            <span id="flapPage" class="flap-page">1/1</span>
+            <button type="button" class="tk-nav tk-next" aria-label="Next page">›</button>
+          </div>
         </div>
       </div>
 
