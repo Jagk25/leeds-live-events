@@ -65,7 +65,7 @@
       </section>
 
       <section class="sb-block">
-        <h4>Top groups · tap a dot to tag</h4>
+        <h4>Top groups · ★ pin · dot to tag</h4>
         <div id="groups" class="groups-list"></div>
       </section>
     </aside>
@@ -73,7 +73,11 @@
     <main class="content">
       <div class="board-frame">
         <div class="board-head"><span class="dot"></span> DEPARTURES · LEEDS SOCIAL LINE</div>
-        <div id="ticker" class="ticker"><div class="ticker-track">Loading the board…</div></div>
+        <div id="ticker" class="ticker">
+          <button type="button" class="tk-nav tk-prev" aria-label="Previous departure">‹</button>
+          <div class="tk-stage"><div class="tk-item">Loading the board…</div></div>
+          <button type="button" class="tk-nav tk-next" aria-label="Next departure">›</button>
+        </div>
       </div>
 
       <div id="watch" class="watch"></div>
@@ -103,8 +107,14 @@
 
   <template id="row">
     <article class="event-row">
+      <button type="button" class="card-color-dot" title="Cycle a custom color for this card"></button>
       <div class="col-time"><span class="tag"></span><span class="when"></span></div>
-      <div class="col-main"><h2></h2><p class="venue"></p></div>
+      <div class="col-main">
+        <h2></h2>
+        <p class="venue"></p>
+        <button type="button" class="series-toggle hidden"></button>
+        <div class="series-more hidden"></div>
+      </div>
       <a class="col-open" target="_blank" rel="noopener">Open ↗</a>
     </article>
   </template>
