@@ -183,7 +183,7 @@ input, select { width: 100%; }
   display: inline-block; font-family: "Share Tech Mono", monospace; color: var(--amber); font-size: 0.84rem;
   text-shadow: 0 0 5px currentColor; transform-style: preserve-3d;
 }
-.flap-cell.flip { animation: flap-flip 0.4s ease-in-out; }
+.flap-cell.flip { animation: flap-flip 0.28s ease-in-out; }
 @keyframes flap-flip {
   0% { transform: rotateX(0deg); opacity: 1; }
   45% { transform: rotateX(-90deg); opacity: .2; }

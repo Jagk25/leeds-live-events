@@ -105,7 +105,7 @@ class SplitFlapCell {
     this.currentIndex = 0;
     this.targetIndex = 0;
     this.isFlipping = false;
-    this.flipDuration = 34;
+    this.flipDuration = 24;
     this.el = document.createElement('div');
     this.el.className = 'split-flap-cell';
     this.el.innerHTML = '<div class="half top flap-static-top"></div><div class="half bottom flap-static-bottom"></div><div class="half top flap-anim-top"></div><div class="half bottom flap-anim-bottom"></div>';
@@ -182,7 +182,7 @@ class SplitFlapBoard {
       this.grid.push(rowCells);
     }
   }
-  setText(lines, staggerMs = 22) {
+  setText(lines, staggerMs = 15) {
     for (let r = 0; r < this.rows; r++) {
       const lineStr = (lines[r] || '').padEnd(this.cols, ' ').substring(0, this.cols);
       for (let c = 0; c < this.cols; c++) {
